@@ -1,9 +1,9 @@
 - [Capture the flag](#capture-the-flag)
 - [Penetration testing methodology](#penetration-testing-methodology)
 - [Web application attack](#web-application-attack)
-- [Encode/Decode & Encrypt/Decrypt](#encode-decode--encrypt-decrypt)
+- [Encode-Decode-Hash](#encode-decode-hash)
 - [Reverse shell](#reverse-shell)
-- [File transfer](#file-transfer)
+- [Files transfer](#files-transfer)
 - [Remote to other machines](#remote-to-other-machines)
 - [Ports scan](#ports-scan)
 - [Port tunneling and port redirection](#port-tunneling-and-port-redirection)
@@ -139,7 +139,7 @@
      - Monitor for suspicious activity and audit logs
      - Network segmentation and firewall rules
 
-# Encode/Decode & Encrypt/Decrypt    
+# Encode-Decode-Hash    
 - Base64 for web: [CyberChef](https://gchq.github.io/CyberChef/)
 - Hash identify: [Hash analyzer](https://www.tunnelsup.com/hash-analyzer/)
 - Hash identify: [hashcat example](https://hashcat.net/wiki/doku.php?id=example_hashes)
