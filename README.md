@@ -7,6 +7,7 @@
 - [Remote to other machines](#remote-to-other-machines)
 - [Ports scan](#ports-scan)
 - [Port tunneling and port redirection](#port-tunneling-and-port-redirection)
+- [Kali built in wordlist and payloads](#kali-built-in-wordlist-and-payloads)
 - [OSCP Vulnerable Software Versions](#oscp-vulnerable-software-versions)
 - [OSCP Pro tips](#oscp-pro-tips)
 - [Recommended OSCP Cracking Tools & Usage (2025)](#recommended-oscp-cracking-tools-&-usage-(2025))
@@ -55,9 +56,8 @@
          ftp> put [binary_file]
 
          #download
-         wget -r ftp://[user]:[password]@[IP]/
+         ftp> get test.txt
          ```  
-       - `get test.txt`  
      - SMB  
        - **enumerate users, groups, shares, OS info, password policy**  
          🔍 `enum4linux -a <IP> > SMB_enum_users.txt`  
@@ -538,6 +538,34 @@ kali: proxychains nmap -Pn -sT -p80 172.16.10.10
 | `cherrytree`      | Reporting and note keeping            | GUI |
 | `keepnote`        | Note organization                     | GUI |
 | `rm`, `Clear-EventLog` | Clean traces (if allowed)        | Manual cleanup |
+
+# Kali built in wordlist and payloads
+- Password wordlists
+  - ❗**/usr/share/wordlists/rockyou.txt**
+  - /usr/share/wordlists/test_small_credentials.txt
+  - /usr/share/wordlists/fasttrack.txt  
+- Gobuster directory wordlists
+  - ❗**/usr/share/wordlists/dirb/common.txt**
+  - /usr/share/wordlists/dirb/big.txt
+  - /usr/share/dirbuster/wordlists/directory-list-2.3-small.txt
+  - /usr/share/wfuzz/wordlist/general/megabeast.txt
+  - /usr/share/wordlists/dirb/others/names.txt    
+- hashcat
+  - ❗**/usr/share/hashcat/rules/best64.rule**
+  - /usr/share/hashcat/rules/rockyou-30000.rule
+- webshells
+  - ❗**/usr/share/webshells/php/simple-backdoor.php**
+  - /usr/share/webshells/aspx/cmdasp.aspx
+- post-exploitation/privilege escalation
+  - /usr/share/peass/winpeas/winPEASx64.exe
+  - /usr/share/windows-resources/powersploit/Privesc/PowerUp.ps1
+  - /usr/share/powershell-empire/empire/server/data/module_source/management/powercat.ps1  
+- windows binaries/utilities
+  - /usr/share/windows-resources/binaries/nc.exe  
+  - /usr/share/windows-resources/binaries/plink.exe  
+- nmap: /usr/share/nmap/scripts/*.nse
+- exploits
+   - /usr/share/exploitdb/exploits/linux/local/45010.c
 
 # OSCP Vulnerable Software Versions
 **Remote Exploits / Service Exploits**
