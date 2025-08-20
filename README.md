@@ -10,7 +10,7 @@
 - [Kali built in wordlist and payloads](#kali-built-in-wordlist-and-payloads)
 - [OSCP Vulnerable Software Versions](#oscp-vulnerable-software-versions)
 - [OSCP Pro tips](#oscp-pro-tips)
-- [Recommended OSCP Cracking Tools & Usage (2025)](#recommended-oscp-cracking-tools-&-usage-(2025))
+- [Cracking Tools](#cracking-tools)
 
 # Capture the flag 
 - Flag format: `OS{68c1a60008e872f3b525407de04e48a3}`  
@@ -772,7 +772,7 @@ searchsploit linux kernel 4.15
 - History files and config files
 - Scripts or backups with credentials
 
-# Recommended OSCP Cracking Tools & Usage (2025)
+# Cracking Tools
 | Tool              | Purpose                                  | Sample Command | Info / Output |
 |------------------|------------------------------------------|----------------|----------------|
 | **nmap**          | Port scan, service/version detection      | `nmap -sC -sV -oN scan.txt 10.10.10.10` | Shows open ports, services, versions, default scripts |
