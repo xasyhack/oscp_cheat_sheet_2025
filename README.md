@@ -5,6 +5,7 @@
 - [Remote to other machines](#remote-to-other-machines)
 - [Ports scan](#ports-scan)
 - [Port tunneling and port redirection](#port-tunneling-and-port-redirection)
+- [OSCP Vulnerable Software Versions](#oscp-vulnerable-software-versions)
 - [OSCP Pro tips](#oscp-pro-tips)
 - [Recommended OSCP Cracking Tools & Usage (2025)](#recommended-oscp-cracking-tools-&-usage-(2025))
 
@@ -22,16 +23,63 @@
 # Penetration testing methodology
 1. Identify in-scope hosts: servers, workstations, network devices
 1. info gathering (passive or active): org infra, assets, personnel
-   - WHOIS, DNS
+   - WHOIS: registrar info, domain owner, nameserver, contract emails
+     - `whois example.com` `whois 192.168.1.100`
+   - DNS: find hostname, subdomains, zone transfer
+     - `nslookup example.com` `host -t txt megacorpone.com`
    - Public resources: LinkedIn, GitHub, Shodan, Google search
-   - Examime SSL/TLS certs, banners, public repos
    - active recon: nmap for host discovery, ports, service, version, banner grabbing
+     - Quick top-ports-scan  
+       `nmap -T4 --top-ports 1000 -sC -sV -oN quick_tcp.txt <IP> --open`  
+     - **Full TCP scan**   
+       🔍 `nmap -p- -sV -oN full_tcp.txt <IP> --open`  
+     - UDP scan (53 DNS, 69 TFTP, 123 NTP, 137/138 NetBIOS, 161 SNMP, 500 IKE/IPSec)    
+       `nmap -sU --top-ports 100 -oN top100_udp.txt <IP> --open`  
+       `nmap -sU -p- -oN full_udp.txt <IP>`  
+     - Combined TCP & UDP  
+       `nmap -sS -sU --top-ports 100 -oN top_tcp_udp.txt <IP> --open`
+     - check for port open  
+       `sudo nmap -sS -p 139,445 192.168.165.0/24 --open`  
+   - protocols
+     - SMB  
+       - **enumerate users, groups, shares, OS info, password policy**  
+         🔍 `enum4linux -a <IP> > SMB_enum_users.txt`  
+       - scan for vulnerabilities  
+         `nmap --script=smb-vuln* -p445 <IP>`
+       - List shares  
+         `smbclient -L //<IP> -N` (anonymous)  
+         `smbclient -L //<IP> -U <user>` (with credentials)  
+         `net view \\dc01 /all`  (domain controller)   
+     - SMTP
+       - user enumeration  
+         `nmap --script=smtp-commands,smtp-enum-users -p25 <IP>`
+       - verify user  
+         `nc -nv <target> 25` `VRFY root`  
+     - SNMP  
+       - enumerate all MIB tree of SNMPv1  
+         `snmpwalk -c public -v1 -t 5 <target>`
+1. Web application recon
+   - ❗Edit hosts and access the site by hostname (show the actual site instead of default page)      
+     `sudo nano /etc/hosts`  
+     192.168.126.13    intranet.local
+   - Software and tech   
+     `whatweb http://<IP>`  
+     `curl -I http://<IP>`  
+   - Enum directory  
+     `gobuster dir -u http://<IP> -w /usr/share/wordlists/dirb/common.txt`
+   - Web data  
+     `curl http://<IP>/robots.txt`
+     `curl http://<IP>/sitemap.xml`  
+   - Vulnerabilities   
+     `nikto -h http://<IP>`  
 1. vulnerability detection
    - Identify unpatched services (E.g: SMB, RDP, Apache, MySQL)
    - Check for default/weak credentials
    - automated scanners: nmap --script vuln, nikto, wpscan
    - manual verification: test SQLi, LFI/RFI, command injection, file upload functionality
-   - tools: nmap, AutoRecon  
+   - tools: nmap, AutoRecon
+   - NSE vulnerability script  
+     `sudo nmap -sV -p 443 --script "vuln" <target>`  
 1. initial foothold
    - Exploit vulnerable service: SMB, FTP, RDP, SSH
    - Web exploitation: SQLi → shell upload, RCE
@@ -245,16 +293,7 @@
 | 8888  | TCP      | Web Apps    | Jupyter, Flask, dev interfaces                           | `curl http://<IP>:8888` <br> `gobuster dir -u http://<IP>:8888 -w /usr/share/wordlists/dirb/common.txt` |
 
 
-- Quick top-ports-scan
-  `nmap -T4 --top-ports 1000 -sC -sV -oN quick_tcp.txt <IP>`  
-- Full TCP scan  
-  `nmap -p- -sC -sV -oN full_tcp.txt <IP>`  
-- UDP scan (53 DNS, 69 TFTP, 123 NTP, 137/138 NetBIOS, 161 SNMP, 500 IKE/IPSec)    
-  `nmap -sU --top-ports 100 -oN top100_udp.txt <IP>`  
-  `nmap -sU -p- -oN full_udp.txt <IP>`  
-  `nmap -p <ports> -sC -sV -oN targeted.txt <target>`  
-- Combined TCP & UDP  
-  `nmap -sS -sU --top-ports 100 -oN top_tcp_udp.txt <IP>`
+
 
 # Port tunneling and port redirection 
 <img src="https://github.com/xasyhack/oscp2025/blob/main/images/port%20forward%20and%20tunneling.png" alt="" width="400"/>  
@@ -380,6 +419,7 @@ kali: proxychains nmap -Pn -sT -p80 172.16.10.10
 **Remote Exploits / Service Exploits**
 | Software          | Vulnerable Version(s) | Exploit / CVE                           |
 |------------------|------------------------|-----------------------------------------|
+| Apache HTTP Server     | 2.4.49           | CVE-2021-41773 (Path Traversal & Remote Code Execution (RCE))         |
 | Apache Tomcat    | 7.x < 7.0.81           | CVE-2017-12615 (PUT upload RCE)         |
 | vsftpd           | 2.3.4                  | Backdoor RCE                            |
 | Exim             | < 4.89                 | CVE-2019-10149 (Command Injection)      |
