@@ -33,7 +33,7 @@
    - Public resources: LinkedIn, GitHub, Shodan, Google search
    - active recon: nmap for host discovery, ports, service, version, banner grabbing
      - Quick top-ports-scan  
-       `nmap -T4 --top-ports 1000 -sC -sV -oN quick_tcp.txt <IP> --open`  
+       `nmap -T4 --top-ports 1000 -sV -oN quick_tcp.txt <IP> --open`  
      - **Full TCP scan**   
        🔍 `nmap -p- -sV -oN full_tcp.txt <IP> --open`  
      - UDP scan (53 DNS, 69 TFTP, 123 NTP, 137/138 NetBIOS, 161 SNMP, 500 IKE/IPSec)    
