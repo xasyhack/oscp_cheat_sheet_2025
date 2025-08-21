@@ -141,32 +141,33 @@
      - Network segmentation and firewall rules
 
 # Encode-Decode-Hash    
-- Base64 for web: [CyberChef](https://gchq.github.io/CyberChef/)
-- Hash identify: [Hash analyzer](https://www.tunnelsup.com/hash-analyzer/)
-- Hash identify: [hashcat example](https://hashcat.net/wiki/doku.php?id=example_hashes)
-- Hash tracker: [CrackStation](https://crackstation.net/)
+- Base64 for web: [CyberChef](https://gchq.github.io/CyberChef/)  
+- Hash identify: [Hash analyzer](https://www.tunnelsup.com/hash-analyzer/)  
+- Hash identify: [hashcat example](https://hashcat.net/wiki/doku.php?id=example_hashes)  
+- Hash tracker: [CrackStation](https://crackstation.net/)  
 - Base64 encoded: `b2Zmc2VjMTIzIQ==`  
-- common hash types
-  `hashcat -m 1000 hashes.dcsync /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`  
-  `kali@kali:~$ sudo hashcat -m 18200 hashes.asreproast /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`  
-  `kali@kali:~$ sudo hashcat -m 13100 hashes.kerberoast /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`  
-  `kali@kali:~$ hashcat -m 1000 nelly.hash /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`  
+- common hash types  
+  `hashcat -m 0 crackme.txt /usr/share/wordlists/rockyou.txt -r demo4.rule --force`  
+  `hashcat -m 1000 nelly.hash /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`  
+  `hashcat -m 22921 ssh.hash ssh.passwords -r ssh.rule --force`    
+  `hashcat -m 18200 hashes.asreproast /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`   
+  `hashcat -m 13100 hashes.kerberoast /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`  
   - Linux
     - md5crypt ($1$) -m 500 `$1$28772684$iEwNOgGugqO9.bIz5sk8k/`  
-    - phpass / WordPress ($P$) -m 400 `$P$984478476IagS59wHZvyQMArzfx58u.`
-    - OpenSSH Private Key ($sshng$6$) -m 22921 `$sshng$6$8$7620048997557487....`
+    - phpass / WordPress ($P$) -m 400 `$P$984478476IagS59wHZvyQMArzfx58u.`  
+    - OpenSSH Private Key ($sshng$6$) -m 22921 `$sshng$6$8$7620048997557487....`  
   - Windows
-    - **NTLM -m 3000** `b4b9b02e6f09a9bd760f388b67351e2b`
-    - **LM -m 3000** `299bd128c1101fd6`
-    - NetNTLMv2 -m 5600 `admin::N46iSNekpT:08ca45b7d7ea58ee:88dcbe4446168966a153a0064958dac6:5c7830315c78303100000`
+    - **NTLM -m 3000** `b4b9b02e6f09a9bd760f388b67351e2b`  
+    - **LM -m 3000** `299bd128c1101fd6`  
+    - NetNTLMv2 -m 5600 `admin::N46iSNekpT:08ca45b7d7ea58ee:88dcbe4446168966a153a0064958dac6:5c7830315c78303100000`  
     - Kerberos 5 AS-REP (etype 23) ($krb5asrep) -m 18200 `$krb5asrep$23$user@domain.com:3e156ada591263b8aa`  
-    - Kerberos 5 TGS-REP (etype 23) ($krb5tgs) -m 13100 `$krb5tgs$23$*user$realm$test/spn*$63386d22d359fe42230300d56852c9eb$891ad31d0`
+    - Kerberos 5 TGS-REP (etype 23) ($krb5tgs) -m 13100 `$krb5tgs$23$*user$realm$test/spn*$63386d22d359fe42230300d56852c9eb$891ad31d0`  
   - Application
-    - **MD5 -m 0** `8743b52063cd84097a65d1633f5c74f5` (32 hex)
-    - **SHA-1 -m 100** `b89eaac7e61417341b710b727768294d0e6a277b` (40 hex)
+    - **MD5 -m 0** `8743b52063cd84097a65d1633f5c74f5` (32 hex)  
+    - **SHA-1 -m 100** `b89eaac7e61417341b710b727768294d0e6a277b` (40 hex)  
   - DB
-    - KeePass -m 13400 ($keepass$*1) `$keepass$*1*50000*0*375756b9e6c72891a8e5645a3338b8c`
-    - Atlassian (PBKDF2-HMAC-SHA1) -m 12001 `{PKCS5S2}NzIyNzM0NzY3NTIwNjI3MdDDis7wPxSbSzfFqDGf7u/L00kSEnupbz36XCL0m7wa`
+    - KeePass -m 13400 ($keepass$*1) `$keepass$*1*50000*0*375756b9e6c72891a8e5645a3338b8c`  
+    - Atlassian (PBKDF2-HMAC-SHA1) -m 12001 `{PKCS5S2}NzIyNzM0NzY3NTIwNjI3MdDDis7wPxSbSzfFqDGf7u/L00kSEnupbz36XCL0m7wa`  
   
 # Web application attack  
 - **Cross-site scripting**
