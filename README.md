@@ -1010,12 +1010,6 @@ kali: proxychains nmap -Pn -sT -p80 172.16.10.10
 | Windows: UAC bypass| Win 7 / 10            | fodhelper / sdclt                   |
 | Windows: DLL Hijack| Misconfigured service | Load custom DLL as SYSTEM           |
 
-**Sample SearchSploit Usage**
-searchsploit vsftpd 2.3.4
-searchsploit samba 3.0
-searchsploit tomcat 7.0.81
-searchsploit linux kernel 4.15
-
 # Protocols login
 | Protocol        | Port    | Tool                | Kali 2025 Login Command Example                                                                                      |
 |-----------------|---------|---------------------|----------------------------------------------------------------------------------------------------------------------|
