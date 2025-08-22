@@ -16,6 +16,7 @@
 - [OSCP Vulnerable Software Versions](#oscp-vulnerable-software-versions)
 - [OSCP Pro tips](#oscp-pro-tips)
 - [Cracking Tools](#cracking-tools)
+- [Top tools and command](#top-tools-and-command)
 
 # Capture the flag 
 - Flag format: `OS{68c1a60008e872f3b525407de04e48a3}`  
