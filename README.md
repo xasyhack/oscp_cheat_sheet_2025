@@ -80,7 +80,7 @@
      `sudo nano /etc/hosts`  
      192.168.126.13    intranet.local
    - Software and tech   
-     `whatweb -v http://<IP>`  
+     `whatweb http://<IP>`  
      `curl -I http://<IP>`  
    - Enum directory  
      `gobuster dir -u http://<IP> -w /usr/share/wordlists/dirb/common.txt -t5`
