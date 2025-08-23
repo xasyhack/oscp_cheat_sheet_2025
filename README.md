@@ -48,7 +48,8 @@
    - protocols
      - SSH
        - connect to the victim
-         `ssh -i <private_key_file> <user>@<target_ip>`  
+         `ssh -i <private_key_file> <user>@<target>`  
+         `ssh -p <port> <user>@<target>`  
      - FTP
        - `ftp -A <target>` #login with anonymous credentialss
          ```
