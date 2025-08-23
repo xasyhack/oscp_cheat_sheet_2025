@@ -96,7 +96,12 @@
      `curl http://<IP>/sitemap.xml`  
    - Vulnerabilities   
      `nikto -h http://<IP>`  
-     `wpscan --url http://alvida-eatery.org --api-token Cnwa5qbii36TyV5oHvnXnQObqC1CQAkJdPsaf5T8i0c` [API token](https://wpscan.com/api/)   
+     `wpscan --url http://<host> --api-token s8gfYK1htkmv3IBDVvsncVJjYYT6PSbAf7n3EeaA3oc` [API token]
+     (https://wpscan.com/api/)
+       - Update wpscan DB `wpscan --update`  
+       - Find "Unauthenticated RCE"  
+       - Test "SQL injection" manually  
+       - If only XSS --> move on unless privilege escalation is possible  
 1. Vulnerability detection
    - Identify unpatched services (E.g: SMB, RDP, Apache, MySQL)
    - Check for default/weak credentials
