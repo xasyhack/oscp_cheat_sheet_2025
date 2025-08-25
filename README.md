@@ -1034,6 +1034,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   - [Lateral Movement guide to multi hop pivioting with ligolo-ng](https://cyberwarfare.live/lateral-movement-a-guide-to-multi-hop-pivoting-with-ligolo-ng/)
   - [How to Tunnel and Pivot Networks using Ligolo-ng](https://software-sinner.medium.com/how-to-tunnel-and-pivot-networks-using-ligolo-ng-cf828e59e740)  
 - Network visualization  
+  ```
   Attacker-Proxy (192.168.x.x)
           |
           |  (Ligolo-ng / SSH / Chisel Tunnel)
@@ -1049,7 +1050,17 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
         -----------------
         |               |
    DC01 (172.0.x.x)   MS02 (172.0.x.x)
-- ddd
+  ```
+- Ligolo-ng setup and install
+  1. Install ligolo-ng to include ligolo-ng proxi file
+     `sudo apt install ligolo-ng`
+  3. Download the agent files from the GitHub for the target machine (In OCSP is windows)
+     - https://github.com/nicocha30/ligolo-ng/releases
+     - [ligolo-ng_agent_0.8.1_windows_amd64.zip](https://github.com/nicocha30/ligolo-ng/releases/download/v0.8.1/ligolo-ng_agent_0.8.1_windows_amd64.zip)
+     - After extracted, 3 files:agent.exe, License, readme.md
+  5. Connect to compromised agent - MS01
+  6. dddd
+  7. dd
 - ddd
 - ddd
 - ddd
