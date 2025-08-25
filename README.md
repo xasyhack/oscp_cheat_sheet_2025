@@ -1028,6 +1028,31 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
 
 # Active directory  
 
+# Ports redirection and tunneling
+- Tutotial
+  - [How to Use Ligolo-ng (Easy to Follow Pivoting Tutorial)](https://www.stationx.net/how-to-use-ligolo-ng/)  
+  - [Lateral Movement guide to multi hop pivioting with ligolo-ng](https://cyberwarfare.live/lateral-movement-a-guide-to-multi-hop-pivoting-with-ligolo-ng/)
+  - [How to Tunnel and Pivot Networks using Ligolo-ng](https://software-sinner.medium.com/how-to-tunnel-and-pivot-networks-using-ligolo-ng-cf828e59e740)  
+- Network visualization  
+  Attacker-Proxy (192.168.x.x)
+          |
+          |  (Ligolo-ng / SSH / Chisel Tunnel)
+          |
+   +-------------------------------+
+   | MS01 - Agent / Compromised    |
+   | Server                        |
+   |                               |
+   | 192.168.x.x  (External)       |
+   | 172.0.x.x    (Internal)       |
+   +-------------------------------+
+                |
+        -----------------
+        |               |
+   DC01 (172.0.x.x)   MS02 (172.0.x.x)
+- ddd
+- ddd
+- ddd
+- ddd
 
 # Top tools and command  
 1. **hashcat**: Cracking NTLM / Kerberos hashes  
