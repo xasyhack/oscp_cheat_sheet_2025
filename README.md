@@ -1028,7 +1028,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
 
 # Active directory  
 
-# Port tunneling and port redirectio
+# Port tunneling and port redirection
 - Tutotial
   - [How to Use Ligolo-ng (Easy to Follow Pivoting Tutorial)](https://www.stationx.net/how-to-use-ligolo-ng/)  
   - [Lateral Movement guide to multi hop pivioting with ligolo-ng](https://cyberwarfare.live/lateral-movement-a-guide-to-multi-hop-pivoting-with-ligolo-ng/)
