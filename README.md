@@ -9,7 +9,7 @@
 - [Linux priviledge](#linux-priviledge)  
 - [Public exploit](#Public-exploit)  
 - [Port tunneling and port redirection](#port-tunneling-and-port-redirection)
-- [Check/kill ports and containers](#check/kill-ports-and-containers)
+- [Check/kill ports and containers](#checkkill-ports-and-containers)
 - [Kali built in wordlist and payloads](#kali-built-in-wordlist-and-payloads)
 - [Top tools and command](#top-tools-and-command)
 
