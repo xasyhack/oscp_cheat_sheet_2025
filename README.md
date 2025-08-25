@@ -7,7 +7,6 @@
 - [Password attack](#password-attack)
 - [Windows priviledge](#windows-priviledge)
 - [Linux priviledge](#linux-priviledge)  
-- [Ports redirection and tunneling](#ports-redirection-and-tunneling)  
 - [Public exploit](#Public-exploit)  
 - [Port tunneling and port redirection](#port-tunneling-and-port-redirection)
 - [Check/kill ports and containers](#check/kill-ports-and-containers)
