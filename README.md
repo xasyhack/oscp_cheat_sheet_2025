@@ -274,7 +274,7 @@ Kali port:
     rdesktop -u <USERNAME> -p <PASSWORD> -d corp.com -r disk:share=/home/kali/share <IP_ADD>
 
     ###To target Windows###
-    ##Netcat
+    ##iwr kali web server
     cd /var/www/html
     sudo python3 -m http.server 80
     nc <target> <port>
