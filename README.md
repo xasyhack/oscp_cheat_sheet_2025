@@ -1218,12 +1218,22 @@ Login to DC
     `kali@kali:~$ sudo hashcat -m 18200 hashes.asreproast /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`
   - Alternate tool - Rubeus  
     `PS C:\Tools> .\Rubeus.exe asreproast /nowrap`  
-- Silver tickets
+- Silver tickets (Forge service tickets)
 - Domain controller synchonization  
 
-
 # Lateral movement  
-- Login to DC
+1. DC1 --> MS02
+   - RDP (psexec)  
+   - Pass-the-Hash (PtH)    
+   - Pass-the-Ticket (PtT)    
+   - Silver Ticket  
+3. MS02 --> DC1
+   - Dump logged-in credentials `sekurlsa::logonpasswords`  
+   - Kerberos Tickets / TGT `sekurlsa::tickets`  
+   - RDP (password spray)  
+   - DCSync  
+   - Pass-the-Hash (PtH)  
+   - Silver Ticket (Forge Kerberos ticket)  
 
 **Out of scope**
 - Golden ticket
