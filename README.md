@@ -1139,8 +1139,12 @@ Login to DC
   - Extract the bloodhound json files.zip
     `PS C:\Users\stephanie\Downloads> Invoke-BloodHound -CollectionMethod All -OutputDirectory C:\Users\stephanie\Desktop\ -OutputPrefix "corp audit"`  
   - Start  BloodHound
-  - d
-  - dd
+    ```
+    cd /home/kali/offsec/active_directory
+    sudo ./bloodhound-cli install      
+    ```
+  - Login http://127.0.0.1:8080/ui/login (admin,Admin12345678!)
+  - Upload the audit_xxx.zip http://127.0.0.1:8080/ui/administration/file-ingest (delete from database management first)  
 
 # Lateral movement  
 - Login to DC
