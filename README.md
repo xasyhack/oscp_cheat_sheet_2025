@@ -1104,11 +1104,11 @@ Login to DC
     Get-ObjectAcl -Identity "Management Department" | Where-Object {$_.ActiveDirectoryRights -eq "GenericAll"} | Select-Object @{n='Identity';e={($_.SecurityIdentifier | Convert-SidToName)}}, ActiveDirectoryRights
     ```
   - ❗Find ACLs "GenericAll"  
-    - Find misconfigured ACLs accounts
+    - Find misconfigured ACLs accounts  
       `Find-InterestingDomainAcl | select identityreferencename,activedirectoryrights,acetype,objectdn | ?{$_.IdentityReferenceName -NotContains "DnsAdmins"} | ft`
-    - Change user domain password
+    - Change user domain password  
       `Set-DomainUserPassword -Identity <user> -AccountPassword (ConvertTo-SecureString 'NewP@ssw0rd!' -AsPlainText -Force`
-    - List the machines that user has local admin rights
+    - List the machines that user has local admin rights  
       `Find-LocalAdminAccess -Credential (New-Object System.Management.Automation.PSCredential("CORP\robert",(ConvertTo-SecureString 'NewP@ssw0rd!' -AsPlainText -Force)))`  
      
   - ❗**Permissions and logged on Users**
