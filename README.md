@@ -1102,22 +1102,27 @@ Login to DC
 
     #List "GenericAll" permissions on the group
     Get-ObjectAcl -Identity "Management Department" | Where-Object {$_.ActiveDirectoryRights -eq "GenericAll"} | Select-Object @{n='Identity';e={($_.SecurityIdentifier | Convert-SidToName)}}, ActiveDirectoryRights
-
-    #Domain shares
-   
     ```
+  - ❗Find ACLs "GenericAll"  
+    - Find misconfigured ACLs accounts
+      `Find-InterestingDomainAcl | select identityreferencename,activedirectoryrights,acetype,objectdn | ?{$_.IdentityReferenceName -NotContains "DnsAdmins"} | ft`
+    - Change user domain password
+      `Set-DomainUserPassword -Identity <user> -AccountPassword (ConvertTo-SecureString 'NewP@ssw0rd!' -AsPlainText -Force`
+    - List the machines that user has local admin rights
+      `Find-LocalAdminAccess -Credential (New-Object System.Management.Automation.PSCredential("CORP\robert",(ConvertTo-SecureString 'NewP@ssw0rd!' -AsPlainText -Force)))`  
+     
   - ❗**Permissions and logged on Users**
-    - enumerate all machines in the domain and check current user has local admin rights
+    - enumerate all machines in the domain and check current user has local admin rights  
       `Find-LocalAdminAccess`
     - ACL
-      `Get-Acl -Path HKLM:SYSTEM\CurrentControlSet\Services\LanmanServer\DefaultSecurity\ | fl`  
-  - check any logged on users
-    `Get-NetSession -ComputerName files04 -Verbose`
+      `Get-Acl -Path HKLM:SYSTEM\CurrentControlSet\Services\LanmanServer\DefaultSecurity\ | fl`    
+  - check any logged on users  
+    `Get-NetSession -ComputerName files04 -Verbose`  
     `PS C:\Tools\PSTools> .\PsLoggedon.exe \\files04`  
-- Service Principal Names (SPNs)
+- Service Principal Names (SPNs)  
   `setspn -L <iis_service>`  #list all Service Principal Names (SPNs) associated with a user or service account
-- add new user to domain group
-  `net group "Management Department" stephanie /add /domain`
+- add new user to domain group  
+  `net group "Management Department" stephanie /add /domain`  
   `net group "Management Department" stephanie /del /domain`
 - Domain Shares
   - Find-DomainShare
