@@ -1141,7 +1141,7 @@ Login to DC
     powershell -ep bypass
     PS C:\Users\stephanie\Downloads> Import-Module .\Sharphound.ps1  
     ```
-  - Extract the bloodhound json files.zip
+  - Extract the bloodhound json files.zip  
     `PS C:\Users\stephanie\Downloads> Invoke-BloodHound -CollectionMethod All -OutputDirectory C:\Users\stephanie\Desktop\ -OutputPrefix "corp audit"`  
   - Start  BloodHound
     ```
