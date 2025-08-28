@@ -803,6 +803,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
    - Current Token privileges
    - Installed Applications
    - Unquoted and Space detected
+   - No quotes and Space detected
    - Looking for possible password files in users homes
    - Searching executable files in non-default folders with write
 - Leveraging Windows Services
