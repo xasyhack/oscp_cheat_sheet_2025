@@ -1171,7 +1171,7 @@ Login to DC
   - retrieve unique ntlm for each users  
     ```
     Get-Content C:\Users\<user>\Desktop\creds.txt |
-    Select-String -Pattern "Username|NTLM" |
+    Select-String -Pattern "Username|NTLM|Logon Server" |
     ForEach-Object { $_.Line.Trim() } |
     Select-Object -Unique
     ```
