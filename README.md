@@ -1145,9 +1145,8 @@ Login to DC
     PS C:\Users\stephanie\Downloads> Import-Module .\Sharphound.ps1  
     ```
   - Extract the bloodhound json files.zip  
-    `PS C:\Users\stephanie\Downloads> Invoke-BloodHound -CollectionMethod All -OutputDirectory C:\Users\stephanie\Desktop\ -OutputPrefix "corp audit"`  OR
-    `.\SharpHound.exe -c All`
-    ``
+    `PS C:\Users\stephanie\Downloads> Invoke-BloodHound -CollectionMethod All -OutputDirectory C:\Users\stephanie\Desktop\ -OutputPrefix "corp audit"`  OR  
+    `.\SharpHound.exe -c All`  
   - Start  BloodHound
     ```
     cd /home/kali/offsec/active_directory
