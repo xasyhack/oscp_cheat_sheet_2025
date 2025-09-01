@@ -151,6 +151,7 @@
      - Network segmentation and firewall rules
 
 # ❗Reverse shell  
+https://infinitelogins.com/2020/01/25/msfvenom-reverse-shell-payload-cheatsheet/
 Kali port:
 80, 443, 53 (reverse shell). Second choice: 4444, 1234 (firewall might block)    
 8080 (burp suite)  
