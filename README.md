@@ -261,6 +261,7 @@ Kali port:
   - List all listening ports `sudo netstat -tulnp`  
   - check port usage `sudo lsof -i :<port>`  
   - kill port `sudo kill -9 <PID>`  
+  - `kill -9 -1` `sudo systemctl restart vmtoolsd` `sudo reboot`  
 - Containers
   - List running docker containers `docker ps`
   - Stop a docker container `docker stop <container_id>`
