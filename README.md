@@ -807,8 +807,9 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
     ```
  - Review
    - Basic System Information
-   - PS default transcripts history
    - Users Information
+   - Scheduled Applications (`schtasks /query /fo LIST /v TN "FTP Backup"`)  
+   - PS default transcripts history   
    - Looking for possible password files in users homes
    - Current Token privileges
    - Installed Applications
