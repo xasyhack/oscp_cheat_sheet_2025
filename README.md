@@ -813,6 +813,7 @@ NobyBzeXN0ZW0oJF9HRVRbImNtZCJdKTs/Pg==&cmd=ls"`
    - PS default transcripts history   
    - Looking for possible password files in users homes
    - Current Token privileges
+   - Iteresting Services -non Microso
    - Installed Applications
    - Unquoted and Space detected
    - No quotes and Space detected
